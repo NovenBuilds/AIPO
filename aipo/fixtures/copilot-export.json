@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "platform": "快手",
+      "url": "https://example.invalid/kuaishou/export-1",
+      "title": "插件导出的短视频标题",
+      "content": "合成导出，只有标题和一句摘要，没有评论正文。"
+    }
+  ]
+}

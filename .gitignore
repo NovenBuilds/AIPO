@@ -10,5 +10,6 @@ __pycache__/
 /runs/
 /out/
 /upstream/
+/configs/aipo.local.json
 *.sqlite
 *.sqlite3

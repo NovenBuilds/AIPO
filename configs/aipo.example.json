@@ -1,0 +1,41 @@
+{
+  "mode": "replay",
+  "database": "data/aipo.sqlite",
+  "archive_root": "runs",
+  "source_timeout_seconds": 25,
+  "model": {
+    "base_url": "",
+    "name": "",
+    "api_key_env": "AIPO_MODEL_API_KEY",
+    "timeout_seconds": 45
+  },
+  "projects": {
+    "xiaohongshu-mcp": {
+      "path": "upstream/xiaohongshu-mcp",
+      "service_url": "http://127.0.0.1:18060"
+    },
+    "goofish-cli": {
+      "path": "upstream/goofish-cli"
+    },
+    "last30days-skill": {
+      "path": "upstream/last30days-skill"
+    },
+    "last30days-skill-cn": {
+      "path": "upstream/last30days-skill-cn"
+    },
+    "Agent-Reach": {
+      "path": "upstream/Agent-Reach"
+    },
+    "MediaCrawler": {
+      "path": "upstream/MediaCrawler",
+      "allow_noncommercial_learning": false
+    },
+    "social-media-copilot": {
+      "path": "upstream/social-media-copilot"
+    },
+    "ai-goofish-monitor": {
+      "path": "upstream/ai-goofish-monitor"
+    }
+  },
+  "imports": {}
+}
