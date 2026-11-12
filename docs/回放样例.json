@@ -1,0 +1,45 @@
+{
+  "description": "合成示例。小红书外层和主要字段形状取自 v2.7.0 历史实采。闲鱼是预期标准化结果，原生响应应按用户已实测的版本核对。这里的内容、价格和 ID 均为虚构。",
+  "question": "我会开发微信小程序，每周能投入 5 小时。优先看小红书和闲鱼，找一个可以试着收费的方向。",
+  "xiaohongshu": {
+    "search_result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"feeds\": [{\"id\": \"synthetic-note-1\", \"xsecToken\": \"SYNTHETIC_REPLAY_ONLY\", \"modelType\": \"note\", \"noteCard\": {\"displayTitle\": \"门店手工汇总太耗时\", \"user\": {\"userId\": \"synthetic-author-1\"}, \"interactInfo\": {\"commentCount\": \"2\"}}}], \"count\": 1}"
+        }
+      ]
+    },
+    "detail_result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"feed_id\": \"synthetic-note-1\", \"data\": {\"note\": {\"noteId\": \"synthetic-note-1\", \"title\": \"门店手工汇总太耗时\", \"desc\": \"每周要把几个门店的表格手工合并。\"}, \"comments\": {\"list\": [{\"id\": \"synthetic-comment-1\", \"noteId\": \"synthetic-note-1\", \"content\": \"想找人一次性做个汇总工具。\", \"userInfo\": {\"userId\": \"synthetic-reader-1\"}, \"subComments\": []}, {\"id\": \"synthetic-comment-2\", \"noteId\": \"synthetic-note-1\", \"content\": \"我们已经用表格公式解决了。\", \"userInfo\": {\"userId\": \"synthetic-reader-2\"}, \"subComments\": []}], \"cursor\": \"\", \"hasMore\": false}}}"
+        }
+      ]
+    }
+  },
+  "goofish": {
+    "normalized_observations": [
+      {
+        "id": "synthetic-listing-1",
+        "platform": "闲鱼",
+        "access": "product",
+        "source_url": "https://example.invalid/xianyu/1",
+        "title": "表格处理咨询",
+        "asking_price": 9.9,
+        "currency": "CNY",
+        "price_note": "挂牌为咨询价，定制范围另议",
+        "transaction_verified": false
+      }
+    ],
+    "expected_boundary": "能观察到同类供给和挂牌价；成交、净利润和买家实际愿付价格未知。"
+  },
+  "expected_report_checks": [
+    "区分讨论、评论与商品供给。",
+    "引用支持证据和替代方案反例。",
+    "将咨询挂牌价与成交价区分。",
+    "保留价格、交付工时及获客成本假设。",
+    "模拟结果仅用于回放；不登记为实采。"
+  ]
+}

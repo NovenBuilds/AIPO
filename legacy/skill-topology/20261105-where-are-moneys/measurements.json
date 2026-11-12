@@ -1,0 +1,164 @@
+{
+  "measured_at": "2026-11-05T01:09:24.931934+08:00",
+  "units": "KB=1000字节；目录磁盘占用由du -sk换算，含块分配差异",
+  "entry_files": [
+    {
+      "path": "~/.agents/skills/where-are-moneys/SKILL.md",
+      "bytes": 5986,
+      "lines": 47
+    },
+    {
+      "path": "~/.agents/skills/where-are-moneys/agents/openai.yaml",
+      "bytes": 309,
+      "lines": 4
+    },
+    {
+      "path": "~/.agents/skills/where-are-moneys/references/platform-research.md",
+      "bytes": 3787,
+      "lines": 30
+    },
+    {
+      "path": "~/.agents/skills/where-are-moneys/references/routes.md",
+      "bytes": 5676,
+      "lines": 61
+    }
+  ],
+  "entry_total_bytes": 15758,
+  "direct_optional_skill_count": 16,
+  "direct_optional_skills": [
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/SKILL.md",
+      "bytes": 5997,
+      "lines": 59
+    },
+    {
+      "path": "~/.agents/skills/market-research/SKILL.md",
+      "bytes": 3185,
+      "lines": 87
+    },
+    {
+      "path": "~/.agents/skills/market-segments/SKILL.md",
+      "bytes": 3623,
+      "lines": 80
+    },
+    {
+      "path": "~/.agents/skills/product-lens/SKILL.md",
+      "bytes": 3373,
+      "lines": 93
+    },
+    {
+      "path": "~/.agents/skills/competitor-analysis/SKILL.md",
+      "bytes": 4814,
+      "lines": 110
+    },
+    {
+      "path": "~/.agents/skills/monetization-strategy/SKILL.md",
+      "bytes": 6660,
+      "lines": 150
+    },
+    {
+      "path": "~/.agents/skills/brainstorm-experiments-new/SKILL.md",
+      "bytes": 2538,
+      "lines": 45
+    },
+    {
+      "path": "~/.agents/skills/beachhead-segment/SKILL.md",
+      "bytes": 5876,
+      "lines": 145
+    },
+    {
+      "path": "~/.agents/skills/gtm-motions/SKILL.md",
+      "bytes": 7556,
+      "lines": 155
+    },
+    {
+      "path": "~/.agents/skills/pricing-strategy/SKILL.md",
+      "bytes": 3666,
+      "lines": 85
+    },
+    {
+      "path": "~/.agents/skills/identify-assumptions-new/SKILL.md",
+      "bytes": 3227,
+      "lines": 52
+    },
+    {
+      "path": "~/.agents/skills/prioritize-assumptions/SKILL.md",
+      "bytes": 2311,
+      "lines": 48
+    },
+    {
+      "path": "~/.agents/skills/brainstorm-experiments-existing/SKILL.md",
+      "bytes": 2408,
+      "lines": 51
+    },
+    {
+      "path": "~/.agents/skills/gtm-strategy/SKILL.md",
+      "bytes": 4047,
+      "lines": 94
+    },
+    {
+      "path": "~/.agents/skills/ideate/SKILL.md",
+      "bytes": 15402,
+      "lines": 213
+    },
+    {
+      "path": "~/.agents/skills/create-prd/SKILL.md",
+      "bytes": 7301,
+      "lines": 97
+    }
+  ],
+  "xiaohongshu_document_chain": [
+    {
+      "path": "~/.agents/skills/where-are-moneys/SKILL.md",
+      "bytes": 5986,
+      "lines": 47
+    },
+    {
+      "path": "~/.agents/skills/where-are-moneys/references/routes.md",
+      "bytes": 5676,
+      "lines": 61
+    },
+    {
+      "path": "~/.agents/skills/where-are-moneys/references/platform-research.md",
+      "bytes": 3787,
+      "lines": 30
+    },
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/SKILL.md",
+      "bytes": 5997,
+      "lines": 59
+    },
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/references/runtime.md",
+      "bytes": 4287,
+      "lines": 36
+    },
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/references/platform-access.md",
+      "bytes": 8349,
+      "lines": 68
+    },
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/references/evidence.md",
+      "bytes": 5088,
+      "lines": 68
+    },
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/upstream/xiaohongshu-mcp/README.md",
+      "bytes": 47181,
+      "lines": 1121
+    }
+  ],
+  "xiaohongshu_chain_full_file_bytes": 86351,
+  "upstream_disk_allocated_kib": 443068,
+  "upstream_count": 8,
+  "prior_sample_raw_json_bytes": 86832,
+  "prior_sample_raw_json_files": 7,
+  "notes": [
+    "整文件体积不是每轮必读量，也不是模型分词数量实测。",
+    "16项只统计入口和routes.md直接链接的技能，不包括进一步间接依赖。",
+    "雷达8项上游是按需选择的数据源，非同时启动的8步流程。",
+    "上轮原始JSON落盘体积不等于本轮模型输入量；图片未计入。",
+    "此图描述当前文字规则与已配置的小红书路径，不是固定程序调用图。"
+  ]
+}

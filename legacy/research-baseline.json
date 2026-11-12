@@ -1,0 +1,31 @@
+{
+  "description": "历史实采与来源状态摘录，用于接手核对；原始帖子、商品详情和会话数据留在本地。",
+  "xiaohongshu": {
+    "version": "v2.7.0",
+    "returned_cards": 20,
+    "unique_notes": 20,
+    "detail_requests": 6,
+    "comments_total": 53,
+    "nonempty_comments": 51,
+    "comments_pagination": false,
+    "observed_at": "2026-11-04T10:48:14.984624+08:00",
+    "login": true,
+    "search": true,
+    "body": true,
+    "comments": true
+  },
+  "goofish": {
+    "tool": "goofish-cli",
+    "version": null,
+    "channels": [
+      {
+        "platform": "闲鱼站内查询",
+        "status": "missing_dependency",
+        "path": "本地环境预检",
+        "reason": "未找到已安装的goofish命令与所需运行模块，配置目录不存在，登录与真实请求状态未知；没有安装依赖、导入会话或执行站内查询。"
+      }
+    ],
+    "observed_on": "2026-11-03",
+    "user_reported_later_live_use": true
+  }
+}

@@ -1,0 +1,184 @@
+--- a/README.md
++++ b/README.md
+@@ -84,7 +84,7 @@
+ | **StockTwits** | Trader sentiment. Auto-activates when your topic is a ticker or crypto. |
+ | **Threads** | The post-Twitter text layer. Conversations from creators and brands. |
+ | **Pinterest** | Visual discovery. Pins, saves, and comments on products and ideas. |
+-| **Xiaohongshu (RED)** | Chinese lifestyle, product, and creator signals. Requested explicitly with `--search xhs` when a logged-in x-mcp browser plugin or `xiaohongshu-mcp` service is running locally. |
++| **Xiaohongshu (RED)** | Chinese lifestyle, product, and creator signals. Requested explicitly with `--search xhs` when a logged-in `xiaohongshu-mcp` service is running locally. |
+ | **Bluesky** | The decentralized social layer. AT Protocol posts from the post-Twitter migration. |
+ | **Perplexity** | Controlled Agent API synthesis, OpenRouter Sonar fallback, raw Search API rows, and explicit Deep Research. |
+ | **DEV Community (dev.to)** | Developer articles and top comments through the public, keyless API. Opt in with `--devto-tags`, `--search devto`, or `INCLUDE_SOURCES=devto`. |
+@@ -271,7 +271,7 @@
+ | YouTube | `brew install yt-dlp` | Free |
+ | Bluesky | App password from bsky.app | Free |
+ | TikTok + Instagram + Threads + Pinterest + LinkedIn + YouTube comments | ScrapeCreators key | 10,000 free calls, then PAYG |
+-| Xiaohongshu (RED) | Run a logged-in x-mcp browser plugin or `xiaohongshu-mcp` service and opt in with `--search xhs` per run or `INCLUDE_SOURCES=xiaohongshu` in `.env`; last30days auto-probes `http://localhost:18060` then `http://host.docker.internal:18060`, or use `XIAOHONGSHU_API_BASE` for a custom URL | No last30days API key; depends on your local browser-session service |
++| Xiaohongshu (RED) | Run a logged-in `xiaohongshu-mcp` service and opt in with `--search xhs` per run or `INCLUDE_SOURCES=xiaohongshu` in `.env`; last30days auto-probes `http://localhost:18060` then `http://host.docker.internal:18060`, or use `XIAOHONGSHU_API_BASE` for a custom URL | No last30days API key; depends on your local browser-session service |
+ | DripStack (premium financial newsletters) | Opt-in: `--search dripstack` per run, or `INCLUDE_SOURCES=dripstack` in `.env` | No key; free public search API |
+ | Perplexity Agent API / Search API / Deep Research | Perplexity key, or OpenRouter key as Sonar fallback | Pay as you go; a direct key enables Agent API and background Deep Research |
+ | Web search | Brave Search key | 2,000 free queries/month |
+--- a/CONFIGURATION.md
++++ b/CONFIGURATION.md
+@@ -188,7 +188,7 @@
+ | LinkedIn | `SCRAPECREATORS_API_KEY` + `INCLUDE_SOURCES` contains `linkedin` | LinkedIn posts + articles (articles rank as high signal on person topics) | 10K free calls; power-user opt-in, not offered during first-run onboarding |
+ | Meta Ads | `SCRAPECREATORS_API_KEY` + (`INCLUDE_SOURCES` contains `meta_ads` **or** `--search` includes `meta_ads`) | **opt-in, off by default**; a brand's live Meta Ad Library creatives that *launched* inside the window, with ad copy, launch date, placements, CTA, landing product, any promo code, and spoken transcripts for the newest video ads. The 📣 footer names the advertiser page that was resolved, plus how much the brand is still running from before. Paid message only, never audience reaction: Meta publishes reach and spend for political ads alone, so commercial creatives carry no engagement. `--meta-ads-page=<page_id>` skips name-based resolution when it picks the wrong company or the brand advertises under product-line page names; `LAST30DAYS_META_ADS_COUNTRY` selects a non-US Ad Library (one country per call). `EXCLUDE_SOURCES=meta_ads` wins. Never auto-fires and never inferred from topic shape: on a non-brand topic, resolution returns unrelated advertisers | 10K free calls; a default run spends at most 7 (1 resolve, plus 1 more only when the first search finds no name match, + up to 2 creative pages + up to 3 transcripts), billed per request. Power-user opt-in, not offered during first-run onboarding |
+ | Telegram | `SCRAPECREATORS_API_KEY` + (`--telegram-sources=<handles>` **or** `TELEGRAM_SOURCES=<handles>` with `INCLUDE_SOURCES=telegram` or `--search telegram`) | **opt-in, off by default**; public channel posts only (no keyword discovery). `--telegram-sources=aipost,durov` auto-activates for that run; `TELEGRAM_SOURCES` alone does not. Accepts bare handle, `@handle`, `t.me/URL`, or `t.me/s/URL`; rejects joinchat links and numeric -100 IDs. `INCLUDE_SOURCES=telegram` or `--search telegram` without a channel list does not fetch. `EXCLUDE_SOURCES=telegram` wins. `TELEGRAM_MAX_PAGES` overrides page cap (quick=1, default=3, deep=6). Never on Recommended onboarding tier. | 1 credit per live posts page; 10K free calls |
+-| Xiaohongshu (RED) | logged-in x-mcp browser plugin or `xiaohongshu-mcp` service; optional `XIAOHONGSHU_API_BASE` for custom URLs | requested-only via `--search xhs` or `--search xiaohongshu`; auto-probes `http://localhost:18060` then `http://host.docker.internal:18060` | no last30days API key; depends on your local browser-session service |
++| Xiaohongshu (RED) | logged-in `xiaohongshu-mcp` service; optional `XIAOHONGSHU_API_BASE` for custom URLs | requested-only via `--search xhs` or `--search xiaohongshu`; auto-probes `http://localhost:18060` then `http://host.docker.internal:18060` | no last30days API key; depends on your local browser-session service |
+ | Bluesky | `BSKY_HANDLE` + `BSKY_APP_PASSWORD` | Bluesky items | yes (app password at bsky.app) |
+ | TruthSocial | `TRUTHSOCIAL_TOKEN` | TruthSocial items | yes |
+ | Web search | one of: `BRAVE_API_KEY`, `EXA_API_KEY`, `SERPER_API_KEY`, `PARALLEL_API_KEY` | `--auto-resolve` and Step 2 supplements | Brave has a free tier; native WebSearch on Claude Code / Codex / Gemini works as a fallback |
+--- a/README.zh-CN.md
++++ b/README.zh-CN.md
+@@ -87,7 +87,7 @@
+ | **StockTwits** | 交易者情绪。当主题是股票代码或加密货币时自动启用。 |
+ | **Threads** | 后 Twitter 时代的文字内容层，汇集创作者和品牌的讨论。 |
+ | **Pinterest** | 视觉发现：围绕产品和创意的 Pin、收藏与评论。 |
+-| **小红书（RED）** | 来自中国生活方式、产品和创作者的信号。当本机运行已登录的 x-mcp 浏览器插件或 `xiaohongshu-mcp` 服务时，通过 `--search xhs` 显式启用。 |
++| **小红书（RED）** | 来自中国生活方式、产品和创作者的信号。当本机运行已登录的 `xiaohongshu-mcp` 服务时，通过 `--search xhs` 显式启用。 |
+ | **Bluesky** | 去中心化的社交内容层，搜索 Twitter 用户迁移后产生的 AT Protocol 帖子。 |
+ | **Perplexity** | 受控 Agent API 综合结果、OpenRouter Sonar 回退、原始 Search API 数据和显式 Deep Research。 |
+ | **DEV Community（dev.to）** | 通过无需密钥的公共 API 搜索开发者文章和热门评论。通过 `--devto-tags`、`--search devto` 或 `INCLUDE_SOURCES=devto` 按需启用。 |
+@@ -270,7 +270,7 @@
+ | YouTube | `brew install yt-dlp` | 免费 |
+ | Bluesky | 来自 bsky.app 的应用密码 | 免费 |
+ | TikTok + Instagram + Threads + Pinterest + LinkedIn + YouTube 评论 | ScrapeCreators 密钥 | 前 10,000 次调用免费，之后按量付费 |
+-| 小红书（RED） | 运行已登录的 x-mcp 浏览器插件或 `xiaohongshu-mcp` 服务，并在单次运行中通过 `--search xhs` 启用，或在 `.env` 中设置 `INCLUDE_SOURCES=xiaohongshu`；last30days 会依次自动探测 `http://localhost:18060` 和 `http://host.docker.internal:18060`，也可通过 `XIAOHONGSHU_API_BASE` 指定自定义地址 | last30days 不需要 API 密钥；依赖本地浏览器会话服务 |
++| 小红书（RED） | 运行已登录的 `xiaohongshu-mcp` 服务，并在单次运行中通过 `--search xhs` 启用，或在 `.env` 中设置 `INCLUDE_SOURCES=xiaohongshu`；last30days 会依次自动探测 `http://localhost:18060` 和 `http://host.docker.internal:18060`，也可通过 `XIAOHONGSHU_API_BASE` 指定自定义地址 | last30days 不需要 API 密钥；依赖本地浏览器会话服务 |
+ | DripStack（付费金融通讯） | 每次运行通过 `--search dripstack` 启用，或在 `.env` 中设置 `INCLUDE_SOURCES=dripstack` | 无需密钥；公共搜索 API 免费 |
+ | Perplexity Agent API / Search API / Deep Research | Perplexity 密钥，或作为 Sonar 回退方案的 OpenRouter 密钥 | 按量付费；直接密钥启用 Agent API 和后台 Deep Research |
+ | Web 搜索 | Brave Search 密钥 | 每月 2,000 次免费查询 |
+--- a/README.ja.md
++++ b/README.ja.md
+@@ -84,7 +84,7 @@
+ | **StockTwits** | トレーダーの温度感。調べる対象が銘柄コードや暗号資産のときに自動で有効になります。 |
+ | **Threads** | Twitter 以後のテキストの層。クリエイターやブランドの会話です。 |
+ | **Pinterest** | ビジュアル起点の発見。プロダクトやアイデアに対するピン・保存・コメント。 |
+-| **Xiaohongshu(RED)** | 中国のライフスタイル・プロダクト・クリエイターのシグナル。ログイン済みの x-mcp ブラウザプラグイン、または `xiaohongshu-mcp` サービスがローカルで動いているときに、`--search xhs` で明示的に指定して使います。 |
++| **Xiaohongshu(RED)** | 中国のライフスタイル・プロダクト・クリエイターのシグナル。ログイン済みの `xiaohongshu-mcp` サービスがローカルで動いているときに、`--search xhs` で明示的に指定して使います。 |
+ | **Bluesky** | 分散型のソーシャル層。Twitter 以後の移住で生まれた AT Protocol の投稿です。 |
+ | **Perplexity** | 制御された Agent API の統合、OpenRouter の Sonar フォールバック、Search API の生の結果、明示的な Deep Research。 |
+ | **DEV Community (dev.to)** | 公開 API で開発者の記事とトップコメントを検索します。キーは不要です。`--devto-tags`、`--search devto`、または `INCLUDE_SOURCES=devto` で有効にします。 |
+@@ -271,7 +271,7 @@
+ | YouTube | `brew install yt-dlp` | 無料 |
+ | Bluesky | bsky.app のアプリパスワード | 無料 |
+ | TikTok + Instagram + Threads + Pinterest + LinkedIn + YouTube のコメント | ScrapeCreators のキー | 1万リクエストまで無料、以降は従量課金 |
+-| Xiaohongshu(RED) | ログイン済みの x-mcp ブラウザプラグインか `xiaohongshu-mcp` サービスを動かしたうえで、実行ごとに `--search xhs` を付けるか `.env` に `INCLUDE_SOURCES=xiaohongshu` を設定して有効化します。last30days は `http://localhost:18060`、次に `http://host.docker.internal:18060` の順に自動で接続を試し、独自のURLを使う場合は `XIAOHONGSHU_API_BASE` を指定します | last30days 側のAPIキーは不要。ローカルのブラウザセッションのサービス次第です |
++| Xiaohongshu(RED) | ログイン済みの `xiaohongshu-mcp` サービスを動かしたうえで、実行ごとに `--search xhs` を付けるか `.env` に `INCLUDE_SOURCES=xiaohongshu` を設定して有効化します。last30days は `http://localhost:18060`、次に `http://host.docker.internal:18060` の順に自動で接続を試し、独自のURLを使う場合は `XIAOHONGSHU_API_BASE` を指定します | last30days 側のAPIキーは不要。ローカルのブラウザセッションのサービス次第です |
+ | DripStack(有料の金融ニュースレター) | 任意で有効化: 実行ごとに `--search dripstack`、または `.env` に `INCLUDE_SOURCES=dripstack` | キー不要。無料の公開検索APIを使います |
+ | Perplexity Agent API / Search API / Deep Research | Perplexity のキー、または Sonar の代替として OpenRouter のキー | 従量課金。直接キーで Agent API とバックグラウンド Deep Research が有効になります |
+ | ウェブ検索 | Brave Search のキー | 月2,000クエリまで無料 |
+--- a/README.de.md
++++ b/README.de.md
+@@ -84,7 +84,7 @@
+ | **StockTwits** | Die Stimmung der Trader. Aktiviert sich automatisch, wenn dein Thema ein Ticker oder eine Kryptowährung ist. |
+ | **Threads** | Die Textebene nach Twitter. Gespräche von Creators und Marken. |
+ | **Pinterest** | Visuelle Entdeckung. Pins, gespeicherte Beiträge und Kommentare zu Produkten und Ideen. |
+-| **Xiaohongshu (RED)** | Chinesische Signale zu Lifestyle, Produkten und Creators. Wird ausdrücklich mit `--search xhs` angefordert, wenn lokal ein eingeloggtes x-mcp-Browser-Plugin oder ein `xiaohongshu-mcp`-Dienst läuft. |
++| **Xiaohongshu (RED)** | Chinesische Signale zu Lifestyle, Produkten und Creators. Wird ausdrücklich mit `--search xhs` angefordert, wenn lokal ein eingeloggter `xiaohongshu-mcp`-Dienst läuft. |
+ | **Bluesky** | Die dezentrale soziale Ebene. AT-Protocol-Beiträge aus der Abwanderung nach Twitter. |
+ | **Perplexity** | Gesteuerte Agent-API-Synthese, OpenRouter-Sonar-Fallback, Rohtreffer der Search API und explizite Deep Research. |
+ | **DEV Community (dev.to)** | Entwicklerartikel und Top-Kommentare über die öffentliche API ohne Schlüssel. Aktivierung mit `--devto-tags`, `--search devto` oder `INCLUDE_SOURCES=devto`. |
+@@ -272,7 +272,7 @@
+ | YouTube | `brew install yt-dlp` | Kostenlos |
+ | Bluesky | App-Passwort von bsky.app | Kostenlos |
+ | TikTok + Instagram + Threads + Pinterest + LinkedIn + YouTube-Kommentare | Ein ScrapeCreators-Schlüssel | 10.000 kostenlose Aufrufe, danach nutzungsabhängig |
+-| Xiaohongshu (RED) | Ein eingeloggtes x-mcp-Browser-Plugin oder einen `xiaohongshu-mcp`-Dienst laufen lassen und die Quelle mit `--search xhs` pro Durchlauf oder `INCLUDE_SOURCES=xiaohongshu` in `.env` zuschalten; last30days probiert automatisch `http://localhost:18060` und danach `http://host.docker.internal:18060`, oder du setzt `XIAOHONGSHU_API_BASE` für eine eigene URL | Kein last30days-API-Schlüssel nötig; hängt von deinem lokalen Browser-Session-Dienst ab |
++| Xiaohongshu (RED) | Einen eingeloggten `xiaohongshu-mcp`-Dienst laufen lassen und die Quelle mit `--search xhs` pro Durchlauf oder `INCLUDE_SOURCES=xiaohongshu` in `.env` zuschalten; last30days probiert automatisch `http://localhost:18060` und danach `http://host.docker.internal:18060`, oder du setzt `XIAOHONGSHU_API_BASE` für eine eigene URL | Kein last30days-API-Schlüssel nötig; hängt von deinem lokalen Browser-Session-Dienst ab |
+ | DripStack (Premium-Finanznewsletter) | Zuschaltbar: `--search dripstack` pro Durchlauf, oder `INCLUDE_SOURCES=dripstack` in `.env` | Kein Schlüssel; kostenlose öffentliche Such-API |
+ | Perplexity Agent API / Search API / Deep Research | Ein Perplexity-Schlüssel, oder ein OpenRouter-Schlüssel als Sonar-Fallback | Nutzungsabhängig; ein direkter Schlüssel aktiviert Agent API und Deep Research im Hintergrund |
+ | Websuche | Ein Brave-Search-Schlüssel | 2.000 kostenlose Anfragen pro Monat |
+--- a/README.fr.md
++++ b/README.fr.md
+@@ -84,7 +84,7 @@
+ | **StockTwits** | Le sentiment des traders. S'active automatiquement quand votre sujet est un ticker ou une crypto. |
+ | **Threads** | La couche texte de l'après-Twitter. Les conversations des créateurs et des marques. |
+ | **Pinterest** | La découverte visuelle. Épingles, enregistrements et commentaires sur des produits et des idées. |
+-| **Xiaohongshu (RED)** | Les signaux chinois sur le lifestyle, les produits et les créateurs. À demander explicitement avec `--search xhs` quand un plugin de navigateur x-mcp connecté ou un service `xiaohongshu-mcp` tourne en local. |
++| **Xiaohongshu (RED)** | Les signaux chinois sur le lifestyle, les produits et les créateurs. À demander explicitement avec `--search xhs` quand un service `xiaohongshu-mcp` connecté tourne en local. |
+ | **Bluesky** | La couche sociale décentralisée. Les posts AT Protocol issus de la migration post-Twitter. |
+ | **Perplexity** | Une synthèse contrôlée avec l’Agent API, un repli Sonar via OpenRouter, les résultats bruts de la Search API et Deep Research explicite. |
+ | **DEV Community (dev.to)** | Articles de développeurs et meilleurs commentaires via l'API publique, sans clé. Activation avec `--devto-tags`, `--search devto` ou `INCLUDE_SOURCES=devto`. |
+@@ -272,7 +272,7 @@
+ | YouTube | `brew install yt-dlp` | Gratuit |
+ | Bluesky | Un mot de passe d'application depuis bsky.app | Gratuit |
+ | TikTok + Instagram + Threads + Pinterest + LinkedIn + commentaires YouTube | Une clé ScrapeCreators | 10 000 appels gratuits, puis paiement à l'usage |
+-| Xiaohongshu (RED) | Faites tourner un plugin de navigateur x-mcp connecté ou un service `xiaohongshu-mcp`, puis activez la source avec `--search xhs` pour une exécution ou `INCLUDE_SOURCES=xiaohongshu` dans `.env` ; last30days teste automatiquement `http://localhost:18060` puis `http://host.docker.internal:18060`, ou utilisez `XIAOHONGSHU_API_BASE` pour une URL personnalisée | Aucune clé API last30days ; dépend de votre service local de session de navigateur |
++| Xiaohongshu (RED) | Faites tourner un service `xiaohongshu-mcp` connecté, puis activez la source avec `--search xhs` pour une exécution ou `INCLUDE_SOURCES=xiaohongshu` dans `.env` ; last30days teste automatiquement `http://localhost:18060` puis `http://host.docker.internal:18060`, ou utilisez `XIAOHONGSHU_API_BASE` pour une URL personnalisée | Aucune clé API last30days ; dépend de votre service local de session de navigateur |
+ | DripStack (newsletters financières premium) | Sur activation : `--search dripstack` pour une exécution, ou `INCLUDE_SOURCES=dripstack` dans `.env` | Aucune clé ; API de recherche publique et gratuite |
+ | Perplexity Agent API / Search API / Deep Research | Une clé Perplexity, ou une clé OpenRouter en repli pour Sonar | Paiement à l'usage ; une clé directe active l’Agent API et Deep Research en arrière-plan |
+ | Recherche web | Une clé Brave Search | 2 000 requêtes gratuites par mois |
+--- a/README.es.md
++++ b/README.es.md
+@@ -84,7 +84,7 @@
+ | **StockTwits** | El sentimiento de los traders. Se activa automáticamente cuando tu tema es un ticker o una criptomoneda. |
+ | **Threads** | La capa de texto posterior a Twitter. Conversaciones de creadores y marcas. |
+ | **Pinterest** | Descubrimiento visual. Pines, guardados y comentarios sobre productos e ideas. |
+-| **Xiaohongshu (RED)** | Señales chinas sobre estilo de vida, productos y creadores. Se pide de forma explícita con `--search xhs` cuando tienes corriendo en local un plugin de navegador x-mcp con sesión iniciada o un servicio `xiaohongshu-mcp`. |
++| **Xiaohongshu (RED)** | Señales chinas sobre estilo de vida, productos y creadores. Se pide de forma explícita con `--search xhs` cuando tienes corriendo en local un servicio `xiaohongshu-mcp` con sesión iniciada. |
+ | **Bluesky** | La capa social descentralizada. Publicaciones de AT Protocol surgidas de la migración posterior a Twitter. |
+ | **Perplexity** | Síntesis controlada con la Agent API, alternativa Sonar mediante OpenRouter, resultados en bruto de la Search API y Deep Research explícita. |
+ | **DEV Community (dev.to)** | Artículos de desarrolladores y mejores comentarios mediante la API pública, sin clave. Actívalo con `--devto-tags`, `--search devto` o `INCLUDE_SOURCES=devto`. |
+@@ -272,7 +272,7 @@
+ | YouTube | `brew install yt-dlp` | Gratis |
+ | Bluesky | Una contraseña de aplicación de bsky.app | Gratis |
+ | TikTok + Instagram + Threads + Pinterest + LinkedIn + comentarios de YouTube | Una clave de ScrapeCreators | 10.000 llamadas gratis y luego pago por uso |
+-| Xiaohongshu (RED) | Ten corriendo un plugin de navegador x-mcp con sesión iniciada o un servicio `xiaohongshu-mcp`, y activa la fuente con `--search xhs` por ejecución o con `INCLUDE_SOURCES=xiaohongshu` en `.env`; last30days prueba automáticamente `http://localhost:18060` y después `http://host.docker.internal:18060`, o usa `XIAOHONGSHU_API_BASE` para una URL propia | No hace falta clave de API de last30days; depende de tu servicio local de sesión de navegador |
++| Xiaohongshu (RED) | Ten corriendo un servicio `xiaohongshu-mcp` con sesión iniciada, y activa la fuente con `--search xhs` por ejecución o con `INCLUDE_SOURCES=xiaohongshu` en `.env`; last30days prueba automáticamente `http://localhost:18060` y después `http://host.docker.internal:18060`, o usa `XIAOHONGSHU_API_BASE` para una URL propia | No hace falta clave de API de last30days; depende de tu servicio local de sesión de navegador |
+ | DripStack (boletines financieros premium) | Opcional: `--search dripstack` por ejecución, o `INCLUDE_SOURCES=dripstack` en `.env` | Sin clave; API de búsqueda pública y gratuita |
+ | Perplexity Agent API / Search API / Deep Research | Una clave de Perplexity, o una clave de OpenRouter como alternativa para Sonar | Pago por uso; una clave directa habilita la Agent API y Deep Research en segundo plano |
+ | Búsqueda web | Una clave de Brave Search | 2.000 consultas gratis al mes |
+--- a/README.pt-BR.md
++++ b/README.pt-BR.md
+@@ -84,7 +84,7 @@
+ | **StockTwits** | O humor dos traders. Ativa automaticamente quando seu assunto é um ticker ou uma cripto. |
+ | **Threads** | A camada de texto do pós-Twitter. Conversas de criadores e marcas. |
+ | **Pinterest** | Descoberta visual. Pins, itens salvos e comentários sobre produtos e ideias. |
+-| **Xiaohongshu (RED)** | Sinais chineses sobre estilo de vida, produtos e criadores. É pedido explicitamente com `--search xhs` quando há um plugin de navegador x-mcp logado ou um serviço `xiaohongshu-mcp` rodando localmente. |
++| **Xiaohongshu (RED)** | Sinais chineses sobre estilo de vida, produtos e criadores. É pedido explicitamente com `--search xhs` quando há um serviço `xiaohongshu-mcp` logado rodando localmente. |
+ | **Bluesky** | A camada social descentralizada. Publicações do AT Protocol vindas da migração pós-Twitter. |
+ | **Perplexity** | Síntese controlada da Agent API, alternativa Sonar via OpenRouter, resultados brutos da Search API e Deep Research explícito. |
+ | **DEV Community (dev.to)** | Artigos de desenvolvedores e melhores comentários pela API pública, sem chave. Ative com `--devto-tags`, `--search devto` ou `INCLUDE_SOURCES=devto`. |
+@@ -272,7 +272,7 @@
+ | YouTube | `brew install yt-dlp` | De graça |
+ | Bluesky | Uma senha de aplicativo do bsky.app | De graça |
+ | TikTok + Instagram + Threads + Pinterest + LinkedIn + comentários do YouTube | Uma chave do ScrapeCreators | 10.000 chamadas gratuitas e depois pagamento por uso |
+-| Xiaohongshu (RED) | Deixe rodando um plugin de navegador x-mcp logado ou um serviço `xiaohongshu-mcp` e habilite a fonte com `--search xhs` por execução ou com `INCLUDE_SOURCES=xiaohongshu` no `.env`; o last30days testa automaticamente `http://localhost:18060` e depois `http://host.docker.internal:18060`, ou use `XIAOHONGSHU_API_BASE` para uma URL própria | Não precisa de chave de API do last30days; depende do seu serviço local de sessão de navegador |
++| Xiaohongshu (RED) | Deixe rodando um serviço `xiaohongshu-mcp` logado e habilite a fonte com `--search xhs` por execução ou com `INCLUDE_SOURCES=xiaohongshu` no `.env`; o last30days testa automaticamente `http://localhost:18060` e depois `http://host.docker.internal:18060`, ou use `XIAOHONGSHU_API_BASE` para uma URL própria | Não precisa de chave de API do last30days; depende do seu serviço local de sessão de navegador |
+ | DripStack (newsletters financeiras premium) | Opcional: `--search dripstack` por execução, ou `INCLUDE_SOURCES=dripstack` no `.env` | Sem chave; API de busca pública e gratuita |
+ | Perplexity Agent API / Search API / Deep Research | Uma chave do Perplexity, ou uma chave do OpenRouter como alternativa para o Sonar | Pagamento por uso; uma chave direta ativa a Agent API e o Deep Research em segundo plano |
+ | Busca na web | Uma chave do Brave Search | 2.000 consultas gratuitas por mês |
+--- a/skills/last30days/references/setup-wizard.md
++++ b/skills/last30days/references/setup-wizard.md
+@@ -234,7 +234,7 @@
+ 
+ **Other optional sources (add anytime):**
+ - `PERPLEXITY_API_KEY=xxx` - preferred Agent/Search API path with citations; set `INCLUDE_SOURCES=perplexity`. Existing `OPENROUTER_API_KEY` installs keep the synchronous Sonar fallback.
+-- `XIAOHONGSHU_API_BASE=http://localhost:18060` - Xiaohongshu/RED via a logged-in x-mcp browser plugin or `xiaohongshu-mcp` service; optional unless the local service runs on a custom URL. Opt in per run with `--search xhs`, or persistently via `INCLUDE_SOURCES=xiaohongshu`.
++- `XIAOHONGSHU_API_BASE=http://localhost:18060` - Xiaohongshu/RED via a logged-in `xiaohongshu-mcp` service; optional unless the local service runs on a custom URL. Opt in per run with `--search xhs`, or persistently via `INCLUDE_SOURCES=xiaohongshu`.
+ - DripStack (premium financial newsletter search) is opt-in only: per run with `--search dripstack`, or persistently via `INCLUDE_SOURCES=dripstack`. Free public search API, no key; never active without the opt-in.
+ - Telegram (public channels) is opt-in via `--telegram-sources=handle1,handle2` (auto-activates for that run) or persistently via `TELEGRAM_SOURCES=handles` + `INCLUDE_SOURCES=telegram`. Requires `SCRAPECREATORS_API_KEY`. Named public channels only; no keyword discovery.
+ - `BSKY_HANDLE=you.bsky.social` + `BSKY_APP_PASSWORD=xxx` - Bluesky (free app password).
+--- a/skills/last30days/scripts/lib/prescriptions.py
++++ b/skills/last30days/scripts/lib/prescriptions.py
+@@ -322,7 +322,7 @@
+             "http://host.docker.internal:18060 unless XIAOHONGSHU_API_BASE is set"
+         ),
+         fix_nl=(
+-            "start a local x-mcp browser plugin or xpzouying/xiaohongshu-mcp "
++            "start a local xpzouying/xiaohongshu-mcp "
+             "service that can see your logged-in Xiaohongshu browser session; "
+             "set XIAOHONGSHU_API_BASE only when it runs on a custom host/port"
+         ),
+--- a/tests/test_xiaohongshu_api.py
++++ b/tests/test_xiaohongshu_api.py
+@@ -38,7 +38,7 @@
+     config = {}
+ 
+     def fake_get(url, **kwargs):
+-        # This mimics an x-mcp/browser-backed service running in the user's
++        # This mimics a browser-backed xiaohongshu-mcp service running in the user's
+         # normal local browser context.
+         assert url.startswith("http://localhost:18060/")
+         if url.endswith("/health"):

@@ -1,0 +1,222 @@
+{
+  "description": "上游保持各自独立，Git 提交为当前本地基线，文件指纹用于识别实际本机副本。",
+  "providers": [
+    {
+      "name": "xiaohongshu-mcp",
+      "url": "https://github.com/xpzouying/xiaohongshu-mcp",
+      "reference_url": "https://github.com/xpzouying/xiaohongshu-mcp",
+      "license": "Apache-2.0",
+      "role": "本机 MCP 与 HTTP 只读接口",
+      "local_version_note": "历史部署 v2.7.0；本机源码压缩包的提交未知",
+      "revision": null,
+      "local_reference_sha256": {
+        "go.mod": "5b55533c87b410667d7787187e97e8059e46914cb7c84b0ac543615fabc711b2",
+        "routes.go": "fbf6b99fab03f05dd7a317f0a27f3a8d8a8670519401c801a6f85fef0cb7be92"
+      },
+      "patches": [
+        "../legacy/topic-signal-radar/patches/xiaohongshu-local-service-only.patch"
+      ]
+    },
+    {
+      "name": "goofish-cli",
+      "url": "https://github.com/fancyboi999/goofish-cli",
+      "reference_url": "https://github.com/fancyboi999/goofish-cli",
+      "license": "Apache-2.0",
+      "role": "命令行或 MCP 商品搜索、详情",
+      "local_version_note": "本机项目声明 0.6.0；用户实测所用版本待补",
+      "revision": null,
+      "local_reference_sha256": {
+        "pyproject.toml": "8a9e372efb3f77d75ff0c32f5a009d2c994936669702371f1e0227f7e63a5951",
+        "src/goofish_cli/mcp_server.py": "6e7263cc3fcd395f146a79d00a810a4db4dfca90e1791a49e9b7c60bd677dcb3",
+        "docs/mcp-setup.md": "bd52ec48ded6ef98d84bfacbc52a2a3ca4726438fc92daaeff965d3ef28c91dd"
+      },
+      "patches": []
+    },
+    {
+      "name": "last30days-skill-cn",
+      "url": "https://github.com/Jesseovo/last30days-skill-cn",
+      "reference_url": "https://github.com/Jesseovo/last30days-skill-cn/tree/af785c682de2fb9192e495daf061308a7a6799ec",
+      "license": "MIT",
+      "role": "国内主题检索与热榜",
+      "local_version_note": "Git 基线加本地准备补丁",
+      "revision": "af785c682de2fb9192e495daf061308a7a6799ec",
+      "local_reference_sha256": {
+        "scripts/last30days.py": "0b7874a21246a226bf961da732650dc17b18778745e305caf7d9ee5f71fc46c2",
+        "scripts/lib/crawler_bridge.py": "7278f796c846c9003e603b9e37b90c7875ec972fde2cdbf50f969050852a7d31"
+      },
+      "patches": [
+        "../legacy/topic-signal-radar/patches/last30days-cn-preflight.patch"
+      ]
+    },
+    {
+      "name": "last30days-skill",
+      "url": "https://github.com/mvanhorn/last30days-skill",
+      "reference_url": "https://github.com/mvanhorn/last30days-skill/tree/f3cd06a620e385ce15109ed6d3b70fc20c89eccc",
+      "license": "MIT",
+      "role": "海外主题检索与来源输出",
+      "local_version_note": "本机项目声明 3.30.0；Git 基线加本地适配",
+      "revision": "f3cd06a620e385ce15109ed6d3b70fc20c89eccc",
+      "local_reference_sha256": {
+        "pyproject.toml": "80bb75af9459dd4bb2f4427ab8e83fb37f7496d931f10dfa3aa8c1d24514e22d",
+        "skills/last30days/scripts/last30days.py": "2a2b0078f74fee6ecd0f729f5798d16f2fd81a427cb52c5d2dc82c52ad1e4647"
+      },
+      "patches": [
+        "../legacy/topic-signal-radar/patches/last30days-local-service-only.patch"
+      ]
+    },
+    {
+      "name": "Agent-Reach",
+      "url": "https://github.com/Panniantong/Agent-Reach",
+      "reference_url": "https://github.com/Panniantong/Agent-Reach/tree/beabda7486e9a666360b18cdb5c0e759c2c4d20f",
+      "license": "MIT",
+      "role": "公开原文、字幕及平台读网",
+      "local_version_note": "本机项目声明 1.6.0",
+      "revision": "beabda7486e9a666360b18cdb5c0e759c2c4d20f",
+      "local_reference_sha256": {
+        "pyproject.toml": "064c3f5e56945ed759d9fed46d690ac80698d2e5d1d8b0c59fe61eb4ffb6fc76",
+        "agent_reach/skill/SKILL.md": "86f6bd3d377f30ec553e8fdac801fc41fe3eda3e0a9a2aa7690d5adb30e8ad7e"
+      },
+      "patches": []
+    },
+    {
+      "name": "MediaCrawler",
+      "url": "https://github.com/NanmiCoder/MediaCrawler",
+      "reference_url": "https://github.com/NanmiCoder/MediaCrawler",
+      "license": "非商业学习许可证 1.1",
+      "role": "经适用许可的批量帖子、评论或导入参考",
+      "local_version_note": "本机项目声明 0.1.0；源码提交未知",
+      "revision": null,
+      "local_reference_sha256": {
+        "pyproject.toml": "d9dca06609bbc55d649d10bc243bf8c304042584e2b9bb168c8dd1d301b4b549",
+        "cmd_arg/arg.py": "00cf76f8f32f663b67d951c25bef2f6a196783ea1a51970cc0b43e46b22339d6"
+      },
+      "patches": []
+    },
+    {
+      "name": "social-media-copilot",
+      "url": "https://github.com/iszhouhua/social-media-copilot",
+      "reference_url": "https://github.com/iszhouhua/social-media-copilot",
+      "license": "GPL-3.0",
+      "role": "浏览器插件导出；服务端为另一个上游分支",
+      "local_version_note": "本机主分支副本声明 0.1.10；源码提交未知",
+      "revision": null,
+      "local_reference_sha256": {
+        "package.json": "2710052242c9944a8dd3889a7a426b83da59ef9a29339ad832107a177814ee02",
+        "docs/xhs.md": "de0d8e75e4e03fad898ff57537a7b582a6fd4225961523d378fd927bbf2f4238"
+      },
+      "patches": []
+    },
+    {
+      "name": "ai-goofish-monitor",
+      "url": "https://github.com/Usagi-org/ai-goofish-monitor",
+      "reference_url": "https://github.com/Usagi-org/ai-goofish-monitor",
+      "license": "MIT",
+      "role": "导入已有监控结果",
+      "local_version_note": "本机源码压缩包提交未知",
+      "revision": null,
+      "local_reference_sha256": {
+        "pyproject.toml": "3e8c7c3ee2039958dd4c32d53b91f74954442676775611e8b54f614110db08aa",
+        "src/api/routes/results.py": "7c68cdae93c22cfb0fa3dc348e2baa3f26f65f1411ebb6b5564e4c7c16e63303"
+      },
+      "patches": []
+    }
+  ],
+  "analysis_references": [
+    {
+      "name": "PM Skills",
+      "version": "2.2.0",
+      "revision": "2a12295a7717569baa7be181b4cfebe3ca38a6bb",
+      "url": "https://github.com/phuryn/pm-skills/tree/2a12295a7717569baa7be181b4cfebe3ca38a6bb"
+    },
+    {
+      "name": "ECC",
+      "version": "2.2.3",
+      "scope": "市场研究、产品诊断；宿主插件"
+    },
+    {
+      "name": "Product Design",
+      "version": "0.1.56",
+      "scope": "产品视觉构思；宿主插件"
+    }
+  ],
+  "supplemental_source": "宿主公开网页搜索与读取，返回实际获取渠道及阅读深度",
+  "analysis_methods": [
+    {
+      "name": "beachhead-segment",
+      "source": "PM Skills 2.2.0",
+      "url": "https://github.com/phuryn/pm-skills/tree/2a12295a7717569baa7be181b4cfebe3ca38a6bb/pm-go-to-market/skills/beachhead-segment"
+    },
+    {
+      "name": "brainstorm-experiments-existing",
+      "source": "PM Skills 2.2.0",
+      "url": "https://github.com/phuryn/pm-skills/tree/2a12295a7717569baa7be181b4cfebe3ca38a6bb/pm-product-discovery/skills/brainstorm-experiments-existing"
+    },
+    {
+      "name": "brainstorm-experiments-new",
+      "source": "旧商机与产品技能索引",
+      "path": "../legacy/skills/商机与产品技能索引.md"
+    },
+    {
+      "name": "competitor-analysis",
+      "source": "PM Skills 2.2.0",
+      "url": "https://github.com/phuryn/pm-skills/tree/2a12295a7717569baa7be181b4cfebe3ca38a6bb/pm-market-research/skills/competitor-analysis"
+    },
+    {
+      "name": "create-prd",
+      "source": "旧商机与产品技能索引",
+      "path": "../legacy/skills/商机与产品技能索引.md"
+    },
+    {
+      "name": "gtm-motions",
+      "source": "PM Skills 2.2.0",
+      "url": "https://github.com/phuryn/pm-skills/tree/2a12295a7717569baa7be181b4cfebe3ca38a6bb/pm-go-to-market/skills/gtm-motions"
+    },
+    {
+      "name": "gtm-strategy",
+      "source": "PM Skills 2.2.0",
+      "url": "https://github.com/phuryn/pm-skills/tree/2a12295a7717569baa7be181b4cfebe3ca38a6bb/pm-go-to-market/skills/gtm-strategy"
+    },
+    {
+      "name": "ideate",
+      "source": "Product Design 0.1.56"
+    },
+    {
+      "name": "identify-assumptions-new",
+      "source": "PM Skills 2.2.0",
+      "url": "https://github.com/phuryn/pm-skills/tree/2a12295a7717569baa7be181b4cfebe3ca38a6bb/pm-product-discovery/skills/identify-assumptions-new"
+    },
+    {
+      "name": "market-research",
+      "source": "ECC 2.2.3"
+    },
+    {
+      "name": "market-segments",
+      "source": "PM Skills 2.2.0",
+      "url": "https://github.com/phuryn/pm-skills/tree/2a12295a7717569baa7be181b4cfebe3ca38a6bb/pm-market-research/skills/market-segments"
+    },
+    {
+      "name": "monetization-strategy",
+      "source": "旧商机与产品技能索引",
+      "path": "../legacy/skills/商机与产品技能索引.md"
+    },
+    {
+      "name": "pricing-strategy",
+      "source": "旧商机与产品技能索引",
+      "path": "../legacy/skills/商机与产品技能索引.md"
+    },
+    {
+      "name": "prioritize-assumptions",
+      "source": "PM Skills 2.2.0",
+      "url": "https://github.com/phuryn/pm-skills/tree/2a12295a7717569baa7be181b4cfebe3ca38a6bb/pm-product-discovery/skills/prioritize-assumptions"
+    },
+    {
+      "name": "product-lens",
+      "source": "ECC 2.2.3"
+    },
+    {
+      "name": "topic-signal-radar",
+      "source": "AIPO 迁入基线",
+      "path": "../legacy/topic-signal-radar/SKILL.md"
+    }
+  ]
+}

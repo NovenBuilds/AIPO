@@ -1,0 +1,62 @@
+--- a/README.md
++++ b/README.md
+@@ -18,12 +18,6 @@
+ > - [xiaohongshu-mcp-skills](https://github.com/autoclaw-cc/xiaohongshu-mcp-skills)（适用于已部署完本项目的用户）
+ > - [xiaohongshu-skills](https://github.com/autoclaw-cc/xiaohongshu-skills)（开箱即用版）
+ 
+-> [!TIP]
+-> #### ✨ 方案 B：x-mcp 浏览器插件版 (推荐给非技术同学 / 追求极简的用户)
+-> - **不想折腾 Docker 或部署环境？试试：[xpzouying/x-mcp](https://github.com/xpzouying/x-mcp)**
+-> - **零配置**：安装插件即用，无需任何代码、代理或复杂的环境配置。
+-> - **安全稳定**：直接在常用浏览器 (Chrome/Edge) 及本地网络运行，无服务器 IP 风险，且能解决 90% 的部署报错。
+-
+ ### 📖 相关资源
+ 
+ - **我的博客文章**：[haha.ai/xiaohongshu-mcp](https://www.haha.ai/xiaohongshu-mcp)
+@@ -33,7 +27,6 @@
+ 
+ 如果您在部署传统 Docker 版本时遇到问题，**务必先查看：[各种疑难杂症 (Issues #56)](https://github.com/xpzouying/xiaohongshu-mcp/issues/56)**。
+ 
+-> *提示：如果环境排查太耗时，切换到 [x-mcp 插件版](https://github.com/xpzouying/x-mcp) 通常是更高效的选择。*
+ 
+ ## Star History
+ 
+@@ -1000,7 +993,6 @@
+ 1. 建议 **从源码安装**。
+ 2. 或使用 **Docker 安装 xiaohongshu-mcp**，教程参考：
+    - [使用 Docker 安装 xiaohongshu-mcp](https://github.com/xpzouying/xiaohongshu-mcp#:~:text=%E6%96%B9%E5%BC%8F%E4%B8%89%EF%BC%9A%E4%BD%BF%E7%94%A8%20Docker%20%E5%AE%B9%E5%99%A8%EF%BC%88%E6%9C%80%E7%AE%80%E5%8D%95%EF%BC%89)
+-   - [X-MCP 项目页面](https://github.com/xpzouying/x-mcp/)
+ 
+ ---
+ 
+--- a/README_EN.md
++++ b/README_EN.md
+@@ -18,12 +18,6 @@
+ > - [xiaohongshu-mcp-skills](https://github.com/autoclaw-cc/xiaohongshu-mcp-skills) (for users who already have this project deployed)
+ > - [xiaohongshu-skills](https://github.com/autoclaw-cc/xiaohongshu-skills) (ready to use out of the box)
+ 
+-> [!TIP]
+-> #### ✨ Option B: x-mcp Browser Extension (recommended for non-technical users / anyone who wants the simplest setup)
+-> - **Don't want to deal with Docker or set up a deployment environment? Try [xpzouying/x-mcp](https://github.com/xpzouying/x-mcp).**
+-> - **Zero configuration**: install the extension and it just works — no code, no proxy, no complicated environment setup.
+-> - **Safe and stable**: runs directly in your everyday browser (Chrome/Edge) on your local network, with no server IP risk, and it solves 90% of deployment errors.
+-
+ ### 📖 Related Resources
+ 
+ - **My blog article**: [haha.ai/xiaohongshu-mcp](https://www.haha.ai/xiaohongshu-mcp)
+@@ -33,7 +27,6 @@
+ 
+ If you run into problems deploying the traditional Docker version, **be sure to check [Common Issues and Solutions (Issues #56)](https://github.com/xpzouying/xiaohongshu-mcp/issues/56) first**.
+ 
+-> *Tip: if troubleshooting your environment is eating up too much time, switching to the [x-mcp extension](https://github.com/xpzouying/x-mcp) is usually the more efficient choice.*
+ 
+ ## Star History
+ 
+@@ -1002,7 +995,6 @@
+ 1. It is recommended to **build from source**.
+ 2. Or use **Docker to install xiaohongshu-mcp**, refer to:
+    - [Install xiaohongshu-mcp with Docker](https://github.com/xpzouying/xiaohongshu-mcp#:~:text=%E6%96%B9%E5%BC%8F%E4%B8%89%EF%BC%9A%E4%BD%BF%E7%94%A8%20Docker%20%E5%AE%B9%E5%99%A8%EF%BC%88%E6%9C%80%E7%AE%80%E5%8D%95%EF%BC%89)
+-   - [X-MCP Project Page](https://github.com/xpzouying/x-mcp/)
+ 
+ ---
+ 

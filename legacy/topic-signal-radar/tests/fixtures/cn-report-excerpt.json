@@ -1,0 +1,44 @@
+{
+  "provenance": "2026-10-24 本机 last30days-cn 实测原始结果的最小摘录，非本次新采集",
+  "topic": "宋雨琦",
+  "bilibili": [
+    {
+      "id": "BL11",
+      "title": "【宋雨琦】 ‘Stay’ LIVE CLIP",
+      "url": "https://www.bilibili.com/video/BV14Tpq6kExw",
+      "bvid": "BV14Tpq6kExw",
+      "channel_name": "i-dle_official",
+      "author_mid": "624243924",
+      "date": "2026-10-14",
+      "date_confidence": "high",
+      "engagement": {
+        "num_comments": 482,
+        "likes": 16556,
+        "views": 186782,
+        "danmaku": 532,
+        "favorites": 6306
+      },
+      "description": "",
+      "duration": 215,
+      "relevance": 1.0,
+      "why_relevant": "B站视频：【宋雨琦】 ‘Stay’ LIVE CLIP",
+      "subs": {
+        "relevance": 100,
+        "recency": 66,
+        "engagement": 100
+      },
+      "score": 91
+    }
+  ],
+  "source_status": {
+    "bilibili": {
+      "state": "ok",
+      "count": 20,
+      "raw_count": 20,
+      "elapsed": 1.2,
+      "via": {
+        "wbi-search": 20
+      }
+    }
+  }
+}

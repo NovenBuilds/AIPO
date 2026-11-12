@@ -1,0 +1,41 @@
+{
+  "entry_bytes": 2546,
+  "entry_directory_bytes": 5431,
+  "regular_xhs_chain": [
+    {
+      "path": "~/.agents/skills/where-are-moneys/SKILL.md",
+      "bytes": 2546
+    },
+    {
+      "path": "~/.agents/skills/where-are-moneys/references/routes.md",
+      "bytes": 2139
+    },
+    {
+      "path": "~/.agents/skills/where-are-moneys/references/platform-research.md",
+      "bytes": 437
+    },
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/SKILL.md",
+      "bytes": 2869
+    },
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/references/platform-access.md",
+      "bytes": 3614
+    },
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/references/providers/xiaohongshu-mcp.md",
+      "bytes": 2487
+    },
+    {
+      "path": "~/project/evolution_lab/FinancialIndependence/AIPO/Explorer探索/topic-signal-radar/references/evidence.md",
+      "bytes": 5832
+    }
+  ],
+  "regular_xhs_chain_bytes": 19924,
+  "regular_xhs_file_count": 7,
+  "direct_skill_count": 16,
+  "local_links_checked": 69,
+  "markdown_files_checked": 13,
+  "protected_files_unchanged": 35,
+  "sources_retained": 8
+}

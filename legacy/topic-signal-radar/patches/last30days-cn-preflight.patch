@@ -1,0 +1,88 @@
+diff --git a/SKILL.md b/SKILL.md
+index 43e1497..573b178 100644
+--- a/SKILL.md
++++ b/SKILL.md
+@@ -66,0 +67,2 @@ Ground every claim in the returned evidence. Never invent sources, links, engage
++运行主题搜索前，先执行第 6 节的环境与登录态预检；后续命令统一使用预检选定的 Python 解释器。
++
+@@ -127,0 +130,33 @@ python {{SKILL_DIR}}/scripts/last30days.py "{{USER_TOPIC}}" --search x,youtube -
++### 搜索前预检与依赖准备
++
++当主题搜索包含微博、小红书、知乎、抖音等可能需要浏览器的平台时，Agent 必须先检查环境，不能直接跳过浏览器采集并把失败统一归因于“缺少登录态”。仅查看热榜、仅查询无需浏览器的平台，或用户明确要求 `--no-browser` 时，不为此安装浏览器依赖。
++
++1. **检查实际运行环境。** 优先复用本技能已有且可用的 Python 虚拟环境，记录其解释器路径；用同一解释器运行 `-c "import playwright.sync_api"`。其他项目或 JavaScript 环境中的 `playwright-core` 不能代替 Python 版 Playwright（浏览器自动化工具）。
++2. **缺失时安装。** 在当前执行权限允许的范围内，主动补齐本次搜索需要的依赖。当前解释器缺少依赖时，使用技能目录下专用的 `.venv` 虚拟环境；若该目录已有环境，先检查并复用，不覆盖重建。不向系统 Python 全局安装，不使用管理员权限安装。创建环境或下载被权限、网络阻止时，按实际原因报告，不反复重试。
++
++   首次创建环境的示例（已有环境时跳过创建）：
++
++   ```bash
++   python3 -m venv "{{SKILL_DIR}}/.venv"
++   ```
++
++   在该环境缺少 Python 版 Playwright 时安装：
++
++   ```bash
++   "{{SKILL_DIR}}/.venv/bin/python" -m pip install playwright
++   ```
++
++   以上为 macOS / Linux 路径；Windows 使用 `.venv/Scripts/python.exe`。本节中的解释器示例均应替换为实际选定的路径。
++
++3. **验证浏览器。** 用选定解释器运行诊断并真实探测一次浏览器启动：
++
++   ```bash
++   "{{SKILL_DIR}}/.venv/bin/python" "{{SKILL_DIR}}/scripts/last30days.py" --diagnose --probe-browser
++   ```
++
++   已有 `LAST30DAYS_BROWSER_PATH` 或 `LAST30DAYS_BROWSER_CHANNEL` 配置时先按原配置验证，不擅自覆盖。若缺少浏览器，可配置并验证本机已有的兼容 Chrome；没有可用浏览器时再运行同一解释器的 `-m playwright install chromium`，完成后重新探测。安装成功不等于浏览器已能启动，浏览器能启动也不等于平台采集成功。
++4. **分别检查平台凭据。** 浏览器可用后，区分未保存登录态、登录过期或触发平台验证，以及可用的替代数据入口（如小红书 MCP 服务、知乎 Cookie、抖音 TikHub 接口）。日常浏览器已登录、源码目录存在，都不能当作本技能已登录的证据。不输出 Cookie（会话凭据）或接口密钥。缺少登录态时告知用户；只有用户已授权打开登录流程时才运行 `login <platform>`，由用户本人扫码或登录。
++5. **统一环境并诚实降级。** 后续登录、搜索和诊断必须使用同一选定解释器，不要装到虚拟环境后又退回系统 `python3`。准备完成后再搜索；用户不登录、明确要求不使用浏览器，或环境准备确实失败时，可使用公开搜索等降级路径，并说明缺失平台、实际尝试路径及限制。分别报告依赖缺失、浏览器启动失败、未登录、平台验证、网络错误或超时，不能将它们混为一谈。
++
++### 登录与诊断命令
++
+@@ -139 +174 @@ python {{SKILL_DIR}}/scripts/last30days.py setup                 # first-time se
+-- The browser path needs `python -m pip install playwright && python -m playwright install chromium`.
++- 浏览器依赖按上面的预检流程安装并验证；本节命令中的 `python` 均代表选定环境的解释器。
+diff --git a/skills/last30days/SKILL.md b/skills/last30days/SKILL.md
+index 43e1497..573b178 100644
+--- a/skills/last30days/SKILL.md
++++ b/skills/last30days/SKILL.md
+@@ -66,0 +67,2 @@ Ground every claim in the returned evidence. Never invent sources, links, engage
++运行主题搜索前，先执行第 6 节的环境与登录态预检；后续命令统一使用预检选定的 Python 解释器。
++
+@@ -127,0 +130,33 @@ python {{SKILL_DIR}}/scripts/last30days.py "{{USER_TOPIC}}" --search x,youtube -
++### 搜索前预检与依赖准备
++
++当主题搜索包含微博、小红书、知乎、抖音等可能需要浏览器的平台时，Agent 必须先检查环境，不能直接跳过浏览器采集并把失败统一归因于“缺少登录态”。仅查看热榜、仅查询无需浏览器的平台，或用户明确要求 `--no-browser` 时，不为此安装浏览器依赖。
++
++1. **检查实际运行环境。** 优先复用本技能已有且可用的 Python 虚拟环境，记录其解释器路径；用同一解释器运行 `-c "import playwright.sync_api"`。其他项目或 JavaScript 环境中的 `playwright-core` 不能代替 Python 版 Playwright（浏览器自动化工具）。
++2. **缺失时安装。** 在当前执行权限允许的范围内，主动补齐本次搜索需要的依赖。当前解释器缺少依赖时，使用技能目录下专用的 `.venv` 虚拟环境；若该目录已有环境，先检查并复用，不覆盖重建。不向系统 Python 全局安装，不使用管理员权限安装。创建环境或下载被权限、网络阻止时，按实际原因报告，不反复重试。
++
++   首次创建环境的示例（已有环境时跳过创建）：
++
++   ```bash
++   python3 -m venv "{{SKILL_DIR}}/.venv"
++   ```
++
++   在该环境缺少 Python 版 Playwright 时安装：
++
++   ```bash
++   "{{SKILL_DIR}}/.venv/bin/python" -m pip install playwright
++   ```
++
++   以上为 macOS / Linux 路径；Windows 使用 `.venv/Scripts/python.exe`。本节中的解释器示例均应替换为实际选定的路径。
++
++3. **验证浏览器。** 用选定解释器运行诊断并真实探测一次浏览器启动：
++
++   ```bash
++   "{{SKILL_DIR}}/.venv/bin/python" "{{SKILL_DIR}}/scripts/last30days.py" --diagnose --probe-browser
++   ```
++
++   已有 `LAST30DAYS_BROWSER_PATH` 或 `LAST30DAYS_BROWSER_CHANNEL` 配置时先按原配置验证，不擅自覆盖。若缺少浏览器，可配置并验证本机已有的兼容 Chrome；没有可用浏览器时再运行同一解释器的 `-m playwright install chromium`，完成后重新探测。安装成功不等于浏览器已能启动，浏览器能启动也不等于平台采集成功。
++4. **分别检查平台凭据。** 浏览器可用后，区分未保存登录态、登录过期或触发平台验证，以及可用的替代数据入口（如小红书 MCP 服务、知乎 Cookie、抖音 TikHub 接口）。日常浏览器已登录、源码目录存在，都不能当作本技能已登录的证据。不输出 Cookie（会话凭据）或接口密钥。缺少登录态时告知用户；只有用户已授权打开登录流程时才运行 `login <platform>`，由用户本人扫码或登录。
++5. **统一环境并诚实降级。** 后续登录、搜索和诊断必须使用同一选定解释器，不要装到虚拟环境后又退回系统 `python3`。准备完成后再搜索；用户不登录、明确要求不使用浏览器，或环境准备确实失败时，可使用公开搜索等降级路径，并说明缺失平台、实际尝试路径及限制。分别报告依赖缺失、浏览器启动失败、未登录、平台验证、网络错误或超时，不能将它们混为一谈。
++
++### 登录与诊断命令
++
+@@ -139 +174 @@ python {{SKILL_DIR}}/scripts/last30days.py setup                 # first-time se
+-- The browser path needs `python -m pip install playwright && python -m playwright install chromium`.
++- 浏览器依赖按上面的预检流程安装并验证；本节命令中的 `python` 均代表选定环境的解释器。

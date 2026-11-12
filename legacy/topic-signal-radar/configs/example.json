@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "last30days-skill": {"path": "upstream/last30days-skill", "python": "python3.12"},
+    "last30days-skill-cn": {"path": "upstream/last30days-skill-cn"},
+    "xiaohongshu-mcp": {"path": "upstream/xiaohongshu-mcp", "service_url": "http://127.0.0.1:18060"}
+  }
+}

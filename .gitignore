@@ -1,0 +1,14 @@
+# 本机环境与运行资料
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+/data/
+/runs/
+/out/
+/upstream/
+*.sqlite
+*.sqlite3

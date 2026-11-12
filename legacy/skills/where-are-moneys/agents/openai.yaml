@@ -1,0 +1,4 @@
+interface:
+  display_name: "where-are-moneys(我的钱，你们在哪儿啊）"
+  short_description: "用简短中文问答寻找盈利项目、评估产品想法并研究平台机会，按需组合现有技能"
+  default_prompt: "使用 $where-are-moneys 帮我研究赚钱机会，从一个问题开始。"
