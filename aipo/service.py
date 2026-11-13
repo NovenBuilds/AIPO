@@ -37,6 +37,8 @@ class Service:
         self.store.recover_running()
         self.autostart = autostart
         self.model_override = None
+        self.plan_override = None
+        self.select_override = None
         self.stop_after_archived = None
         self._cv = threading.Condition()
         self._stop = False
