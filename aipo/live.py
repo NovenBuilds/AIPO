@@ -161,19 +161,23 @@ def collect_xiaohongshu(config, keyword, timeout, select=None):
     base = config.service_url("xiaohongshu-mcp", "http://127.0.0.1:18060")
     path = "live:xiaohongshu-mcp/in-site"
     try:
-        health = http_json("GET", base + "/health", timeout=min(4, timeout))
-        login = http_json("GET", base + "/api/v1/login/status", timeout=min(4, timeout))
+        health = http_json("GET", base + "/health", timeout=min(8, timeout))
+        login = http_json("GET", base + "/api/v1/login/status", timeout=timeout)
     except TimeoutError:
         return result("xiaohongshu-mcp", "live", "timeout", "小红书", path + "/health", "小红书服务超时。未写入笔记。", registration="受阻")
     except HttpError as exc:
         return result("xiaohongshu-mcp", "live", "error", "小红书", path + "/health", "小红书服务未连通：%s。未写入笔记。" % exc, registration="受阻")
+    version = None
+    if isinstance(health, dict) and isinstance(health.get("data"), dict):
+        found = health["data"].get("version")
+        version = found if isinstance(found, str) else None
     if not isinstance(health, dict) or health.get("success") is not True:
-        return result("xiaohongshu-mcp", "live", "error", "小红书", path + "/health", "健康检查不符合 success 契约。未搜索。", raw={"health": health}, registration="受阻")
+        return result("xiaohongshu-mcp", "live", "error", "小红书", path + "/health", "健康检查不符合 success 契约。未搜索。", raw={"health": health}, version=version, registration="受阻")
     logged = login.get("data", {}).get("is_logged_in") if isinstance(login, dict) else None
     if logged is False:
-        return result("xiaohongshu-mcp", "live", "need_login", "小红书", path + "/login", "服务可达，但当前没有有效登录。未搜索。", raw={"login": {"is_logged_in": False}}, registration="受阻")
+        return result("xiaohongshu-mcp", "live", "need_login", "小红书", path + "/login", "服务可达，但当前没有有效登录。未搜索。", raw={"login": {"is_logged_in": False}}, version=version, registration="受阻")
     if logged is not True:
-        return result("xiaohongshu-mcp", "live", "unknown", "小红书", path + "/login", "登录状态无法判断。未搜索。", registration="受阻")
+        return result("xiaohongshu-mcp", "live", "unknown", "小红书", path + "/login", "登录状态无法判断。未搜索。", version=version, registration="受阻")
     try:
         search = http_json("POST", base + "/api/v1/feeds/search", {"keyword": keyword}, timeout=timeout)
     except TimeoutError:
@@ -181,9 +185,6 @@ def collect_xiaohongshu(config, keyword, timeout, select=None):
     except HttpError as exc:
         return result("xiaohongshu-mcp", "live", "error", "小红书", path + "/search", "搜索失败：%s" % exc, registration="受阻")
     feeds = _walk_feeds(search)
-    version = None
-    if isinstance(health.get("data"), dict):
-        version = health["data"].get("version")
     if not feeds:
         return result("xiaohongshu-mcp", "live", "empty", "小红书", path + "/search", "搜索成功，但没有可解析的笔记卡片。",
                       raw={"search": search}, version=version if isinstance(version, str) else None, read_depth="0 篇", registration="实采")

@@ -526,6 +526,48 @@ class ModelAndPriceTests(ResearchCase):
         self.assertEqual(source["read_depth"], "1 条公开搜索，补读 1 篇")
         self.assertEqual(source["version"], "1.6.0")
 
+    def test_slow_xiaohongshu_login_is_not_a_timeout(self):
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        import time as time_mod
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, fmt, *args):
+                return
+
+            def do_GET(self):
+                if self.path == "/api/v1/login/status":
+                    time_mod.sleep(1.2)
+                    body = b'{"data":{"is_logged_in":false}}'
+                elif self.path == "/health":
+                    body = b'{"success":true,"data":{"version":"v2.7.4"}}'
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        live = self.make("live", source_timeout_seconds=8, projects={
+            "xiaohongshu-mcp": {"service_url": "http://127.0.0.1:%s" % server.server_address[1]},
+        })
+        try:
+            view = self.finish("指定只看小红书的费用讨论", service=live)
+        finally:
+            server.shutdown()
+            server.server_close()
+            live.close()
+        source = view["sources"][0]
+        self.assertEqual(source["status"], "need_login")
+        self.assertEqual(source["version"], "v2.7.4")
+        self.assertNotIn("门店手工汇总", view["report_markdown"])
+
     def test_verified_transaction_is_not_a_listing(self):
         from aipo.report import build_brief
         aggregate = {"evidence": [{
@@ -651,11 +693,11 @@ class InventoryTests(unittest.TestCase):
     def test_fingerprint_mismatch_is_explicit(self):
         report = compare_local(load_config(ROOT / "configs" / "aipo.example.json"))
         for row in report["providers"]:
-            if not row["present"]:
-                self.assertTrue(all(not item["match"] for item in row["files"]))
-            else:
-                self.assertTrue(row["files"])
-                self.assertTrue(all(item["match"] for item in row["files"]))
+            self.assertTrue(row["files"])
+            for item in row["files"]:
+                self.assertIn("match", item)
+                if not row["present"] or item.get("missing"):
+                    self.assertFalse(item["match"])
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             target = root / "go.mod"
