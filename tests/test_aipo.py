@@ -444,6 +444,88 @@ class ModelAndPriceTests(ResearchCase):
         self.assertEqual(source["read_depth"], "2 条挂牌，详情 1 条")
         self.assertEqual(view["status"], "已完成")
 
+    def _fake_last30days(self, root, relative):
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json, os, sys\n"
+            "open(os.environ['SEARCH_LOG'], 'a', encoding='utf-8').write(' '.join(sys.argv[1:]) + '\\n')\n"
+            "print(json.dumps({'schema_version': 1, 'results': [{'title': '公开 HN 标题', 'url': 'https://news.ycombinator.com/item?id=1', 'source': 'hackernews', 'summary': '摘要'}], 'source_status': {'hackernews': 'ok'}}))\n",
+            encoding="utf-8",
+        )
+        path.chmod(0o755)
+
+    def test_overseas_search_follows_named_source(self):
+        log = self.root / "search.log"
+        os.environ["SEARCH_LOG"] = str(log)
+        os.environ.pop("LAST30DAYS_DEFAULT_SEARCH", None)
+        self._fake_last30days(self.root / "os", "skills/last30days/scripts/last30days.py")
+        self._fake_last30days(self.root / "cn", "scripts/last30days.py")
+        live = self.make("live", source_timeout_seconds=8, projects={
+            "last30days-skill": {"path": str(self.root / "os")},
+            "last30days-skill-cn": {"path": str(self.root / "cn")},
+        })
+        try:
+            named = self.finish("指定只看 Hacker News 的表格讨论", service=live)
+            broad = self.finish("国内外对照：有没有人愿意为表格自动化付费", service=live)
+        finally:
+            os.environ.pop("SEARCH_LOG", None)
+            live.close()
+        commands = log.read_text(encoding="utf-8").splitlines()
+        self.assertTrue(any("--search hackernews" in line and "reddit,hackernews" not in line for line in commands))
+        self.assertFalse(any("reddit,hackernews" in line for line in commands))
+        self.assertEqual(named["coverage"]["registration"], "实采")
+        self.assertIn("公开 HN 标题", named["report_markdown"])
+        self.assertNotIn("本任务没有实采结果", named["report_markdown"])
+        self.assertIn("已完成", broad["status"])
+
+    def test_public_web_search_and_followup_read(self):
+        bin_dir = self.root / "bin"
+        bin_dir.mkdir()
+        log = self.root / "reach.log"
+        script = bin_dir / "agent-reach"
+        script.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json, os, sys\n"
+            "open(os.environ['REACH_LOG'], 'a', encoding='utf-8').write(' '.join(sys.argv[1:]) + '\\n')\n"
+            "args = sys.argv[1:]\n"
+            "if args[:1] == ['version']:\n"
+            "    print(json.dumps({'ok': True, 'result': {'version': '1.6.0'}}))\n"
+            "    raise SystemExit(0)\n"
+            "if args[:2] == ['web', 'search']:\n"
+            "    print(json.dumps({'ok': True, 'backend': 'exa', 'items': [{'title': '小程序费用说明', 'url': 'https://developers.weixin.qq.com/miniprogram/introduction/', 'text': '认证费说明'}]}))\n"
+            "    raise SystemExit(0)\n"
+            "if args[:1] == ['read']:\n"
+            "    print(json.dumps({'ok': True, 'channel': 'web', 'backend': 'jina', 'items': [{'title': '小程序费用说明', 'url': args[1], 'text': '企业认证需要支付认证费。'}]}))\n"
+            "    raise SystemExit(0)\n"
+            "raise SystemExit(1)\n",
+            encoding="utf-8",
+        )
+        script.chmod(0o755)
+        old = os.environ.get("PATH", "")
+        os.environ["PATH"] = str(bin_dir) + os.pathsep + old
+        os.environ["REACH_LOG"] = str(log)
+        live = self.make("live", source_timeout_seconds=8)
+        try:
+            view = self.finish("指定公开网页看看小程序费用说明", service=live)
+        finally:
+            os.environ["PATH"] = old
+            os.environ.pop("REACH_LOG", None)
+            live.close()
+        commands = log.read_text(encoding="utf-8").splitlines()
+        self.assertTrue(any(line.startswith("web search") for line in commands))
+        self.assertTrue(any(line.startswith("read https://developers.weixin.qq.com/") for line in commands))
+        self.assertEqual(view["status"], "已完成")
+        self.assertEqual(view["coverage"]["registration"], "实采")
+        self.assertIn("小程序费用说明", view["report_markdown"])
+        self.assertIn("公开线索", view["report_markdown"])
+        self.assertIn("企业认证需要支付认证费", view["report_markdown"])
+        self.assertNotIn("门店手工汇总", view["report_markdown"])
+        source = view["sources"][0]
+        self.assertEqual(source["read_depth"], "1 条公开搜索，补读 1 篇")
+        self.assertEqual(source["version"], "1.6.0")
+
     def test_verified_transaction_is_not_a_listing(self):
         from aipo.report import build_brief
         aggregate = {"evidence": [{

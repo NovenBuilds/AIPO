@@ -3,6 +3,7 @@
 import csv
 import io
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -387,17 +388,72 @@ def _script(path):
     return path.is_file()
 
 
-def collect_last30days(config, source, topic, timeout, search, hot=False):
+CN_SEARCH = {
+    "B站": "bilibili",
+    "微博": "weibo",
+    "知乎": "zhihu",
+    "抖音": "douyin",
+    "微信公众号": "wechat",
+    "百度": "baidu",
+    "今日头条": "toutiao",
+    "中文检索": "cn",
+}
+OS_SEARCH = {
+    "Reddit": "reddit",
+    "X": "x",
+    "YouTube": "youtube",
+    "Hacker News": "hackernews",
+    "Polymarket": "polymarket",
+    "GitHub": "github",
+}
+OS_PLATFORM = {
+    "hackernews": "Hacker News",
+    "github": "GitHub",
+    "reddit": "Reddit",
+    "polymarket": "Polymarket",
+    "youtube": "YouTube",
+    "devto": "网页",
+    "x": "X",
+}
+OS_STATE = {
+    "ok": "success",
+    "empty": "empty",
+    "no-results": "empty",
+    "timeout": "timeout",
+    "auth-failed": "need_login",
+    "rate-limited": "degraded",
+    "error": "error",
+}
+
+
+def _search_args(source, platforms):
+    """任务点名的渠道优先。没点名时，中文用 cn 分组，海外沿用已配置来源。"""
+    table = CN_SEARCH if source == "last30days-skill-cn" else OS_SEARCH
+    tokens = []
+    for name in platforms or []:
+        token = table.get(name)
+        if token and token not in tokens:
+            tokens.append(token)
+    if not tokens and source == "last30days-skill-cn":
+        tokens = ["cn"]
+    if not tokens and source == "last30days-skill":
+        configured = os.environ.get("LAST30DAYS_DEFAULT_SEARCH", "")
+        tokens = [part.strip() for part in configured.split(",") if part.strip()]
+    if not tokens:
+        return []
+    return ["--search", ",".join(tokens)]
+
+
+def collect_last30days(config, source, topic, timeout, platforms, hot=False):
     if source == "last30days-skill-cn":
         root = config.project_path(source, "upstream/last30days-skill-cn")
         script = root / "scripts" / "last30days.py"
-        version = "af785c6"
-        command_search = ["--search", "cn"]
+        version = "4.0.0-cn"
     else:
         root = config.project_path(source, "upstream/last30days-skill")
         script = root / "skills" / "last30days" / "scripts" / "last30days.py"
         version = "3.30.0"
-        command_search = ["--search", search or "reddit,hackernews"]
+    command_search = _search_args(source, platforms)
     path = "live:%s" % source
     if not _script(script):
         return result(source, "live", "missing_dependency", "检索", path,
@@ -428,17 +484,64 @@ def collect_last30days(config, source, topic, timeout, search, hot=False):
                         "%s 条可定位链接" % len(evidence), registration="实采")
 
 
+def _status_state(status, key):
+    raw = status.get(key)
+    if isinstance(raw, dict):
+        return raw.get("state")
+    if isinstance(raw, str):
+        return raw
+    return None
+
+
+def _parse_overseas(payload, path_base):
+    channels = []
+    evidence = []
+    status = payload.get("source_status") if isinstance(payload.get("source_status"), dict) else {}
+    grouped = {}
+    for row in payload.get("results") or []:
+        if not isinstance(row, dict):
+            continue
+        url = row.get("url")
+        title = row.get("title")
+        source_name = str(row.get("source") or "web")
+        if not isinstance(url, str) or not url.startswith(("http://", "https://")) or not title:
+            continue
+        platform = OS_PLATFORM.get(source_name, source_name)
+        item_path = "%s/in-site/%s" % (path_base, source_name)
+        grouped[item_path] = platform
+        published = row.get("published_at") if isinstance(row.get("published_at"), str) else None
+        evidence.append(evidence_item(
+            url, platform, str(title), "检索摘要，未默认补读正文。", item_path, "link", published,
+        ))
+    for item_path, platform in grouped.items():
+        channels.append({"platform": platform, "status": "success", "path": item_path, "reason": ""})
+    for key, raw in status.items():
+        state = raw.get("state") if isinstance(raw, dict) else raw
+        if any(item["path"].endswith("/" + key) for item in channels):
+            continue
+        mapped = OS_STATE.get(state, "empty" if state in (None, "") else "error")
+        channels.append({
+            "platform": OS_PLATFORM.get(key, key),
+            "status": mapped,
+            "path": "%s/in-site/%s" % (path_base, key),
+            "reason": "",
+        })
+    return channels, evidence
+
+
 def parse_research_json(payload, path_base):
     channels = []
     evidence = []
     if not isinstance(payload, dict):
         return channels, evidence
+    if "schema_version" in payload and isinstance(payload.get("results"), list):
+        return _parse_overseas(payload, path_base)
     status = payload.get("source_status") if isinstance(payload.get("source_status"), dict) else {}
     for key, rows in payload.items():
         if key == "source_status" or not isinstance(rows, list):
             continue
         platform, site = CN_KEYS.get(key, (key, "in-site"))
-        state = (status.get(key) or {}).get("state")
+        state = _status_state(status, key)
         mapped = {"ok": "success", "empty": "empty", "timeout": "timeout"}.get(state, "success" if rows else "empty")
         item_path = "%s/%s/%s" % (path_base, "public-index" if site == "public-index" else "in-site", key)
         channels.append({"platform": platform, "status": mapped, "path": item_path, "reason": ""})
@@ -556,9 +659,82 @@ def collect_import(config, source, mode):
     return _import_result(source, config.import_path(source), "live")
 
 
-def collect_host_web():
-    return result("host-web", "live", "blocked", "网页", "live:host-web/public-clue",
-                  "本服务不内置网页抓取，没有把公开索引写成已读取。", registration="受阻")
+def _agent_json(proc):
+    try:
+        value = json.loads(proc.stdout or "")
+    except json.JSONDecodeError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _excerpt(text):
+    compact = " ".join(str(text or "").split())
+    return compact[:180]
+
+
+def collect_host_web(keyword, timeout):
+    binary = shutil.which("agent-reach")
+    path = "live:host-web/public-index"
+    if not binary:
+        return result("host-web", "live", "missing_dependency", "网页", path,
+                      "未找到 agent-reach 命令。没有做公开网页搜索，也没有编造链接。", registration="受阻")
+    version = None
+    try:
+        version_proc = run_command([binary, "version"], timeout=min(8, timeout))
+        version_payload = _agent_json(version_proc)
+        if version_payload:
+            version = ((version_payload.get("result") or {}).get("version"))
+    except (TimeoutError, OSError):
+        version = None
+    try:
+        proc = run_command([binary, "web", "search", keyword, "--timeout", str(max(8, min(timeout, 40)))], timeout=timeout)
+    except TimeoutError:
+        return result("host-web", "live", "timeout", "网页", path, "公开网页搜索超时。", version=version, registration="受阻")
+    payload = _agent_json(proc)
+    if proc.returncode != 0 or not payload or payload.get("ok") is not True:
+        return result("host-web", "live", "error", "网页", path, "公开网页搜索没有返回可用结果。",
+                      raw={"returncode": proc.returncode, "stderr": (proc.stderr or "")[:400]},
+                      version=version, registration="受阻")
+    backend = payload.get("backend") or "unknown"
+    evidence = []
+    for item in (payload.get("items") or [])[:5]:
+        if not isinstance(item, dict):
+            continue
+        url = item.get("url")
+        title = item.get("title")
+        if not isinstance(url, str) or not url.startswith(("http://", "https://")) or not title:
+            continue
+        published = item.get("published_at") if isinstance(item.get("published_at"), str) else None
+        summary = "公开搜索摘录：%s 渠道 %s。这是公开线索，不是站内正文。" % (_excerpt(item.get("text")) or "无摘录", backend)
+        evidence.append(evidence_item(url, "网页", str(title), summary, path, "link", published))
+    read_count = 0
+    read_raw = None
+    if evidence:
+        target = evidence[0]["url"]
+        read_proc = None
+        try:
+            read_proc = run_command([binary, "read", target, "--timeout", str(max(8, min(timeout, 40)))], timeout=timeout)
+            read_raw = _agent_json(read_proc)
+        except TimeoutError:
+            read_raw = {"ok": False, "error": "timeout"}
+        items = (read_raw or {}).get("items") if isinstance(read_raw, dict) else None
+        if read_proc is not None and read_proc.returncode == 0 and isinstance(items, list) and items and isinstance(items[0], dict):
+            body = items[0]
+            body_url = body.get("url") if isinstance(body.get("url"), str) and body.get("url").startswith(("http://", "https://")) else target
+            body_title = body.get("title") or evidence[0]["title"]
+            published = body.get("published_at") if isinstance(body.get("published_at"), str) else None
+            channel = (read_raw or {}).get("backend") or (read_raw or {}).get("channel") or "read"
+            summary = "公开原文摘录：%s 补读渠道 %s。" % (_excerpt(body.get("text")) or "没有正文", channel)
+            evidence.append(evidence_item(body_url, "网页", str(body_title), summary, "live:host-web/public-clue/body", "body", published))
+            read_count = 1
+    status = "success" if evidence else "empty"
+    if evidence and read_count == 0:
+        status = "degraded"
+    depth = "%s 条公开搜索，补读 %s 篇" % (sum(1 for item in evidence if item["access"] == "link"), read_count)
+    reason = "公开网页搜索渠道 %s。补读 %s 篇。公开线索不能代替站内样本。" % (backend, read_count)
+    return result("host-web", "live", status, "网页", path + ("+read" if read_count else ""), reason,
+                  evidence=evidence, raw={"search": payload, "read": read_raw}, version=version if isinstance(version, str) else None,
+                  read_depth=depth, registration="实采")
 
 
 def collect(job, config, attempt, task_kind, select=None):
@@ -574,8 +750,7 @@ def collect(job, config, attempt, task_kind, select=None):
     if source == "goofish-cli":
         return collect_goofish(keyword, timeout, select=select)
     if source in ("last30days-skill-cn", "last30days-skill"):
-        search = "cn" if source.endswith("-cn") else "reddit,hackernews"
-        return collect_last30days(config, source, keyword, timeout, search, hot="hot" in job["capabilities"])
+        return collect_last30days(config, source, keyword, timeout, job.get("platforms") or [], hot="hot" in job["capabilities"])
     if source == "Agent-Reach":
         target = job["urls"][0] if job["urls"] else ""
         if not target:
@@ -584,5 +759,5 @@ def collect(job, config, attempt, task_kind, select=None):
     if source in IMPORT_FILES:
         return collect_import(config, source, "live")
     if source == "host-web":
-        return collect_host_web()
+        return collect_host_web(keyword, timeout)
     return result(source, "live", "blocked", source, "live:%s" % source, "没有实采适配。未伪造结果。", registration="受阻")
