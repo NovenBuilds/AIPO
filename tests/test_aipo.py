@@ -568,7 +568,12 @@ class InventoryTests(unittest.TestCase):
 
     def test_fingerprint_mismatch_is_explicit(self):
         report = compare_local(load_config(ROOT / "configs" / "aipo.example.json"))
-        self.assertTrue(all(not row["present"] for row in report["providers"]))
+        for row in report["providers"]:
+            if not row["present"]:
+                self.assertTrue(all(not item["match"] for item in row["files"]))
+            else:
+                self.assertTrue(row["files"])
+                self.assertTrue(all(item["match"] for item in row["files"]))
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             target = root / "go.mod"
