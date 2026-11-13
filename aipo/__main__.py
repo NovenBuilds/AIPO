@@ -31,8 +31,8 @@ def main(argv=None):
     resume.add_argument("--answer")
     resume.add_argument("--sync", action="store_true")
     sub.add_parser("fingerprint")
-    doctor = sub.add_parser("doctor")
-    doctor.add_argument("--probe", action="store_true")
+    doctor_cmd = sub.add_parser("doctor")
+    doctor_cmd.add_argument("--probe", action="store_true")
     sub.add_parser("map")
     args = parser.parse_args(argv)
     try:

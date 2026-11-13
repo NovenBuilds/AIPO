@@ -88,6 +88,77 @@ def _market(jobs):
     return "cn"
 
 
+def clamp_plan(question, planned, proposal):
+    """收紧模型提案。不能新增来源，也不能删掉用户点名的平台。"""
+    if not isinstance(proposal, dict) or not isinstance(planned, dict):
+        return None
+    raw_keys = proposal.get("keywords")
+    if not isinstance(raw_keys, list) or not raw_keys:
+        return None
+    keywords = []
+    for item in raw_keys[:3]:
+        if not isinstance(item, str):
+            return None
+        text = " ".join(item.split())
+        if not text or len(text) > 40:
+            return None
+        keywords.append(text)
+    jobs = planned.get("jobs")
+    if not isinstance(jobs, list) or not jobs:
+        return None
+    allowed = [job["source"] for job in jobs if isinstance(job, dict) and job.get("source")]
+    keep = proposal.get("keep_sources", allowed)
+    if not isinstance(keep, list) or any(not isinstance(item, str) for item in keep):
+        return None
+    named = set(detect_platforms(question))
+    required = []
+    for job in jobs:
+        if any(platform in named for platform in job.get("platforms") or []):
+            if job["source"] not in required:
+                required.append(job["source"])
+    chosen = []
+    for source in list(keep) + required:
+        if source in allowed and source not in chosen:
+            chosen.append(source)
+    if not chosen:
+        return None
+    updated = dict(planned)
+    updated["keywords"] = keywords
+    updated["jobs"] = []
+    for index, job in enumerate(job for job in jobs if job.get("source") in chosen):
+        copied = dict(job)
+        copied["ordinal"] = index
+        copied["keywords"] = keywords
+        updated["jobs"].append(copied)
+    budget = dict(planned.get("budget") or {})
+    budget["keyword_groups"] = len(keywords)
+    updated["budget"] = budget
+    updated["model_plan"] = True
+    return updated
+
+
+def clamp_ids(cards, limit, proposal):
+    """只保留候选里的编号，并且不超过预算。"""
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
+        return None
+    if isinstance(proposal, list):
+        raw = proposal
+    elif isinstance(proposal, dict):
+        raw = proposal.get("ids")
+    else:
+        return None
+    if not isinstance(raw, list):
+        return None
+    known = [card.get("id") for card in cards if isinstance(card, dict) and card.get("id")]
+    chosen = []
+    for item in raw:
+        if item in known and item not in chosen:
+            chosen.append(item)
+        if len(chosen) >= limit:
+            break
+    return chosen or None
+
+
 def plan(question, platforms=None):
     selected = normalize_platforms(platforms) if platforms else detect_platforms(question)
     task_kind = kind(question)

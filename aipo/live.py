@@ -3,6 +3,7 @@
 import csv
 import io
 import json
+import re
 import shutil
 import subprocess
 import urllib.error
@@ -140,7 +141,22 @@ def _comment_nodes(comments):
     return flat, more
 
 
-def collect_xiaohongshu(config, keyword, timeout):
+def _listing_amount(value):
+    if value is None:
+        return None
+    text = str(value).replace("¥", "").replace("￥", "").replace(",", "").strip()
+    if re.fullmatch(r"\d+(?:\.\d+)?", text):
+        return text
+    return None
+
+
+def _sold_status(status):
+    text = str(status or "")
+    lowered = text.lower()
+    return any(word in text or word in lowered for word in ("已售", "售出", "卖掉", "已卖出", "sold"))
+
+
+def collect_xiaohongshu(config, keyword, timeout, select=None):
     base = config.service_url("xiaohongshu-mcp", "http://127.0.0.1:18060")
     path = "live:xiaohongshu-mcp/in-site"
     try:
@@ -172,6 +188,16 @@ def collect_xiaohongshu(config, keyword, timeout):
                       raw={"search": search}, version=version if isinstance(version, str) else None, read_depth="0 篇", registration="实采")
     evidence = []
     details = []
+    cards = []
+    for feed in feeds:
+        note_id = str(feed.get("id") or feed.get("noteId") or "")
+        token = feed.get("xsecToken") or feed.get("xsec_token")
+        card = feed.get("noteCard") if isinstance(feed.get("noteCard"), dict) else {}
+        title = card.get("displayTitle") or feed.get("title") or note_id or "未命名笔记"
+        if note_id:
+            cards.append({"id": note_id, "title": str(title), "has_token": bool(token)})
+    chosen = select(cards, 6) if select is not None else None
+    chosen_set = set(chosen) if chosen else None
     for index, feed in enumerate(feeds):
         note_id = str(feed.get("id") or feed.get("noteId") or "")
         token = feed.get("xsecToken") or feed.get("xsec_token")
@@ -179,7 +205,8 @@ def collect_xiaohongshu(config, keyword, timeout):
         title = card.get("displayTitle") or feed.get("title") or note_id or "未命名笔记"
         if not note_id:
             continue
-        if index >= 6 or not token:
+        should_read = bool(token) and (note_id in chosen_set if chosen_set is not None else index < 6)
+        if not should_read:
             evidence.append(evidence_item(
                 _note_url(note_id, feed.get("url")), "小红书", str(title),
                 "搜索卡片。未读正文。实采。", path + "/search", "link",
@@ -234,52 +261,126 @@ def _parse_goofish_items(payload):
     return []
 
 
-def collect_goofish(keyword, timeout):
+def _json_stdout(proc):
+    try:
+        value = json.loads(proc.stdout or "")
+    except json.JSONDecodeError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _goofish_url(item):
+    url = item.get("url") or item.get("link")
+    if isinstance(url, str) and url.startswith(("http://", "https://")):
+        return url
+    item_id = str(item.get("item_id") or item.get("id") or "")
+    if item_id.isdigit():
+        return "https://www.goofish.com/item?id=%s" % item_id
+    return ""
+
+
+def _listing_sentence(price):
+    amount = _listing_amount(price)
+    if amount is None:
+        return "挂牌价未知。"
+    return "挂牌价 %s。未核验成交。" % amount
+
+
+def _goofish_summary(item, detail):
+    parts = ["供给。", _listing_sentence((detail or {}).get("price") if detail else item.get("price"))]
+    if detail:
+        kind = {"fixed": "一口价", "negotiable": "可议价"}.get(detail.get("price_kind"), "未知")
+        parts.append("标价类型：%s。" % kind)
+        original = _listing_amount(detail.get("original_price"))
+        if original:
+            parts.append("原价标记 %s，不是成交价。" % original)
+        status = detail.get("status")
+        if _sold_status(status):
+            parts.append("平台公开标记：商品状态为%s。这不是独立核验成交。" % status)
+        elif status:
+            parts.append("平台状态：%s。这是在售或未知状态，不是成交记录。" % status)
+        else:
+            parts.append("平台状态未知。")
+        description = " ".join(str(detail.get("description") or "").split())
+        if description:
+            parts.append("卖家自述：%s。" % description[:120])
+    else:
+        badge = " ".join(str(item.get("badge") or "").split())
+        if _sold_status(badge):
+            parts.append("平台公开标记：搜索卡片标记为%s。这不是独立核验成交。" % badge[:40])
+        parts.append("未读详情。")
+    parts.append("实采。")
+    return "".join(parts)
+
+
+def collect_goofish(keyword, timeout, select=None):
     binary = shutil.which("goofish")
     path = "live:goofish-cli/in-site"
     if not binary:
         return result("goofish-cli", "live", "missing_dependency", "闲鱼", path,
                       "未找到 goofish 命令。没有查询商品。指纹对应的入口是 v0.6.0。", registration="受阻")
     try:
-        auth = run_command([binary, "auth", "status"], timeout=min(timeout, 15))
+        auth = run_command([binary, "auth", "status", "--format", "json"], timeout=min(timeout, 8))
     except TimeoutError:
         return result("goofish-cli", "live", "timeout", "闲鱼", path + "/auth", "登录检查超时。未搜索商品。", registration="受阻")
-    if auth.returncode != 0:
-        text = (auth.stderr or auth.stdout or "")[:500]
+    auth_payload = _json_stdout(auth)
+    if auth.returncode != 0 or not auth_payload or auth_payload.get("valid") is not True:
         return result("goofish-cli", "live", "need_login", "闲鱼", path + "/auth",
-                      "auth status 未通过，未搜索商品。", raw={"returncode": auth.returncode, "output": text}, registration="受阻")
+                      "auth status 未确认有效登录。未搜索商品。", raw={"valid": False}, registration="受阻")
     try:
         proc = run_command([binary, "search", "items", keyword, "--limit", "5", "--format", "json"], timeout=timeout)
     except TimeoutError:
         return result("goofish-cli", "live", "timeout", "闲鱼", path + "/search", "闲鱼搜索超时。", registration="受阻")
-    raw_text = proc.stdout or ""
-    if proc.returncode != 0:
-        return result("goofish-cli", "live", "error", "闲鱼", path + "/search", "搜索命令失败。",
-                      raw={"returncode": proc.returncode, "stderr": (proc.stderr or "")[:500]}, registration="受阻")
-    try:
-        payload = json.loads(raw_text)
-    except json.JSONDecodeError:
-        return result("goofish-cli", "live", "degraded", "闲鱼", path + "/search",
-                      "命令成功但输出不是 JSON。原件已保留，没有编造商品。",
-                      raw={"stdout": raw_text[:4000]}, read_depth="0 条可解析商品", registration="实采")
+    payload = _json_stdout(proc)
+    if payload is None:
+        return result("goofish-cli", "live", "degraded" if proc.returncode == 0 else "error", "闲鱼", path + "/search",
+                      "搜索输出不是 JSON。原件已保留，没有编造商品。",
+                      raw={"returncode": proc.returncode, "stdout": (proc.stdout or "")[:4000]},
+                      read_depth="0 条可解析商品", registration="实采" if proc.returncode == 0 else "受阻")
+    errors = [item for item in payload.get("errors") or [] if isinstance(item, dict)]
+    if any(item.get("error_type") == "authentication_required" for item in errors) or payload.get("requiresAuth") is True:
+        return result("goofish-cli", "live", "need_login", "闲鱼", path + "/search", "搜索结果要求登录。", raw={"valid": False}, registration="受阻")
+    if any(item.get("error_type") == "blocked" for item in errors):
+        return result("goofish-cli", "live", "blocked", "闲鱼", path + "/search", "搜索被平台拦截。未采用商品。", registration="受阻")
     parsed = _parse_goofish_items(payload)
     if parsed == "auth":
-        return result("goofish-cli", "live", "need_login", "闲鱼", path + "/search", "搜索结果要求登录。", raw=payload, registration="受阻")
+        return result("goofish-cli", "live", "need_login", "闲鱼", path + "/search", "搜索结果要求登录。", raw={"valid": False}, registration="受阻")
+    items = [item for item in list(parsed)[:5] if isinstance(item, dict)]
+    cards = []
+    for item in items:
+        item_id = str(item.get("item_id") or item.get("id") or "")
+        if item_id:
+            cards.append({"id": item_id, "title": str(item.get("title") or item_id)})
+    chosen = select(cards, 5) if select is not None else None
+    chosen_ids = set(chosen) if chosen else {card["id"] for card in cards}
     evidence = []
-    for item in list(parsed)[:5]:
-        if not isinstance(item, dict):
-            continue
-        url = item.get("url") or item.get("link")
+    details = []
+    detail_count = 0
+    for item in items:
+        url = _goofish_url(item)
         title = item.get("title") or item.get("item_id") or item.get("id")
-        if not isinstance(url, str) or not url.startswith(("http://", "https://")) or not title:
+        if not url or not title:
             continue
-        price = item.get("price")
-        price_text = "挂牌价未知。" if price in (None, "") else "挂牌价 %s。未核验成交。" % price
-        evidence.append(evidence_item(url, "闲鱼", str(title), "供给。%s 实采。" % price_text, path + "/search", "product"))
+        item_id = str(item.get("item_id") or item.get("id") or "")
+        detail = None
+        if item_id.isdigit() and item_id in chosen_ids:
+            try:
+                detail_proc = run_command([binary, "item", "get", item_id, "--format", "json"], timeout=min(timeout, 8))
+                detail = _json_stdout(detail_proc) if detail_proc.returncode == 0 else None
+            except TimeoutError:
+                detail = None
+            if detail:
+                detail_count += 1
+                details.append({"item_id": item_id, "detail": {key: value for key, value in detail.items() if key != "raw"}})
+        evidence.append(evidence_item(url, "闲鱼", str(title), _goofish_summary(item, detail), path + "/search+item-get", "product"))
     status = "success" if evidence else "empty"
-    return result("goofish-cli", "live", status, "闲鱼", path + "/search",
-                  "实采商品搜索，最多取 5 条有链接的结果。挂牌不是成交。",
-                  evidence=evidence, raw=payload, read_depth="%s 条挂牌" % len(evidence), registration="实采" if status == "success" else "实采")
+    if proc.returncode != 0 and evidence:
+        status = "degraded"
+    depth = "%s 条挂牌，详情 %s 条" % (len(evidence), detail_count)
+    reason = "实采商品搜索后按预算读取详情。挂牌价不是成交价。登录标识未写入原件。"
+    return result("goofish-cli", "live", status, "闲鱼", path + "/search+item-get", reason,
+                  evidence=evidence, raw={"search": payload, "details": details, "auth_valid": True},
+                  read_depth=depth, registration="实采")
 
 
 def _script(path):
@@ -460,7 +561,7 @@ def collect_host_web():
                   "本服务不内置网页抓取，没有把公开索引写成已读取。", registration="受阻")
 
 
-def collect(job, config, attempt, task_kind):
+def collect(job, config, attempt, task_kind, select=None):
     del attempt, task_kind
     source = job["source"]
     keyword = job["keywords"][0] if job["keywords"] else "商机"
@@ -469,9 +570,9 @@ def collect(job, config, attempt, task_kind):
         platform = job["platforms"][0] if job["platforms"] else "未登记"
         return result("host-web", "live", "blocked", platform, "live:unregistered", "未登记平台，未调用上游。", registration="受阻")
     if source == "xiaohongshu-mcp":
-        return collect_xiaohongshu(config, keyword, timeout)
+        return collect_xiaohongshu(config, keyword, timeout, select=select)
     if source == "goofish-cli":
-        return collect_goofish(keyword, timeout)
+        return collect_goofish(keyword, timeout, select=select)
     if source in ("last30days-skill-cn", "last30days-skill"):
         search = "cn" if source.endswith("-cn") else "reddit,hackernews"
         return collect_last30days(config, source, keyword, timeout, search, hot="hot" in job["capabilities"])

@@ -168,6 +168,17 @@ def build_brief(question, aggregate, sources, plan, mode):
             lines.append("- 看到挂牌价 %s，出处 %s。这是挂牌或咨询标价，不是成交价，也不能当成买家愿付价格。" % (amount, _cite(view)))
     else:
         lines.append("证据里没有挂牌价或费用数字，这里不编价格。")
+    verified = [view for view in views if "独立核验成交：" in view["summary"] and "不是独立核验成交" not in view["summary"]]
+    platform_marks = [view for view in views if "平台公开标记" in view["summary"]]
+    seller_notes = [view for view in views if "卖家自述" in view["summary"]]
+    if verified:
+        lines.append("成交证据：%s 写明独立核验成交。它和挂牌价是两类证据。" % "、".join(_cite(view) for view in verified))
+    else:
+        lines.append("成交证据：没有独立核验成交。挂牌价、卖家自述和平台状态都不是成交价。")
+    if platform_marks:
+        lines.append("平台公开标记：%s。只说明页面或接口上的状态，不能写成已核验成交。" % "、".join(_cite(view) for view in platform_marks))
+    if seller_notes:
+        lines.append("卖家自述：%s。这是卖家自己的话，不是独立核验成交。" % "、".join(_cite(view) for view in seller_notes))
     if hours_text:
         lines.append("交付工时假设：每周 %s 小时，来自题目。若两周内做不出可交付的一版，就超出这个约束。" % hours_text)
     else:
@@ -226,6 +237,25 @@ def build_brief(question, aggregate, sources, plan, mode):
             "to_verify": "未发现更多反例不等于没有反例。成交价、付费意愿和获客成本都还没有证实。",
         }]
     return brief, cards
+
+
+REQUIRED_MODEL_WORDS = ("目标客户", "反例", "挂牌", "成交", "最小付费验证", "停止条件")
+
+
+def splice_model_report(brief, model_text):
+    """用完整的模型判断替换机会判断到结论缺口之前的段落。不完整时返回 None。"""
+    text = (model_text or "").strip()
+    if not text or "登记：" in text or "登记" in text:
+        return None
+    if any(word not in text for word in REQUIRED_MODEL_WORDS):
+        return None
+    start = brief.find("\n## 机会判断\n")
+    end = brief.find("\n## 结论缺口\n")
+    if start < 0 or end < 0 or start >= end:
+        return None
+    if not text.startswith("## "):
+        text = "## 模型判断\n\n" + text
+    return brief[:start] + "\n" + text.rstrip() + "\n" + brief[end:]
 
 
 def coverage(sources, aggregate):

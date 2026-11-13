@@ -16,7 +16,7 @@ QUESTION = "我会开发微信小程序，每周能投入 5 小时，帮我找�
 ROOT = repo_root()
 
 
-class ServiceCase(unittest.TestCase):
+class ResearchCase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
@@ -59,6 +59,7 @@ class ServiceCase(unittest.TestCase):
         service.run(snap["research_id"])
         return service.get(snap["research_id"])
 
+class ServiceCase(ResearchCase):
     def test_miniprogram_replay_report(self):
         view = self.finish(QUESTION)
         self.assertEqual(view["status"], "已完成")
@@ -286,6 +287,184 @@ class ServiceCase(unittest.TestCase):
         self.assertIn("正在执行", view["note"])
 
 
+class ModelAndPriceTests(ResearchCase):
+    def test_configured_model_plans_selects_and_cites(self):
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+        calls = {"detail": [], "keyword": None}
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, fmt, *args):
+                return
+
+            def _json(self, payload, code=200):
+                raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+                self.send_response(code)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(raw)))
+                self.end_headers()
+                self.wfile.write(raw)
+
+            def do_GET(self):
+                if self.path == "/health":
+                    self._json({"success": True, "data": {"version": "stub-xhs"}})
+                elif self.path == "/api/v1/login/status":
+                    self._json({"data": {"is_logged_in": True}})
+                else:
+                    self._json({"ok": False}, 404)
+
+            def do_POST(self):
+                length = int(self.headers.get("Content-Length") or 0)
+                body = json.loads(self.rfile.read(length).decode("utf-8"))
+                if self.path == "/v1/chat/completions":
+                    system = body["messages"][0]["content"]
+                    user = body["messages"][1]["content"]
+                    if "研究规划器" in system:
+                        content = json.dumps({"keywords": ["门店表格汇总"], "keep_sources": ["xiaohongshu-mcp"]}, ensure_ascii=False)
+                    elif "值得深读" in system:
+                        content = json.dumps({"ids": ["note-b"]}, ensure_ascii=False)
+                    else:
+                        import re
+                        found = re.findall(r"\[(E[a-f0-9]{16})\]", user)
+                        content = (
+                            "目标客户是留下这条材料的人 [%s]。反例尚未单独成段。"
+                            "没有挂牌价。没有成交证据。最小付费验证是先向对方报价。停止条件是无人付款。"
+                        ) % found[0]
+                    self._json({"choices": [{"message": {"content": content}}]})
+                    return
+                if self.path == "/api/v1/feeds/search":
+                    calls["keyword"] = body.get("keyword")
+                    self._json({"feeds": [
+                        {"id": "note-a", "xsecToken": "token-a", "noteCard": {"displayTitle": "先不要读"}},
+                        {"id": "note-b", "xsecToken": "token-b", "noteCard": {"displayTitle": "值得深读的门店表格"}},
+                    ]})
+                    return
+                if self.path == "/api/v1/feeds/detail":
+                    calls["detail"].append(body.get("feed_id"))
+                    self._json({"data": {"note": {"noteId": body.get("feed_id"), "title": "值得深读的门店表格", "desc": "想找人做汇总。"}, "comments": {"list": []}}})
+                    return
+                self._json({"ok": False}, 404)
+
+        model_server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        xhs_server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        threads = []
+        for server in (model_server, xhs_server):
+            thread = __import__("threading").Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            threads.append(thread)
+        os.environ["AIPO_MODEL_API_KEY"] = "test-key"
+        live = None
+        try:
+            live = self.make("live", source_timeout_seconds=8, model={
+                "base_url": "http://127.0.0.1:%s/v1" % model_server.server_address[1],
+                "name": "stub-model",
+                "timeout_seconds": 5,
+            }, projects={
+                "xiaohongshu-mcp": {"service_url": "http://127.0.0.1:%s" % xhs_server.server_address[1]},
+            })
+            view = self.finish(QUESTION, ["小红书"], service=live)
+        finally:
+            os.environ.pop("AIPO_MODEL_API_KEY", None)
+            model_server.shutdown()
+            xhs_server.shutdown()
+            model_server.server_close()
+            xhs_server.server_close()
+            if live is not None:
+                live.close()
+        self.assertEqual(view["status"], "已完成")
+        self.assertEqual(calls["keyword"], "门店表格汇总")
+        self.assertEqual(calls["detail"], ["note-b"])
+        self.assertIn("门店表格汇总", view["report_markdown"])
+        self.assertIn("没有成交证据", view["report_markdown"])
+        self.assertIn("目标客户是留下这条材料的人", view["report_markdown"])
+        self.assertTrue(any(item["kind"] == "model_plan" for item in view["events"]))
+        self.assertTrue(any(item["kind"] == "model_select" for item in view["events"]))
+        self.assertTrue(any(item["kind"] == "model_report" for item in view["events"]))
+        source = view["sources"][0]
+        self.assertEqual(source["read_depth"], "2 张卡片，深读 1 篇")
+        self.assertEqual(source["version"], "stub-xhs")
+        self.assertIn("先不要读", view["report_markdown"])
+        self.assertNotIn("模型补充", view["report_markdown"])
+
+    def test_goofish_detail_keeps_listing_apart_from_platform_status(self):
+        bin_dir = self.root / "bin"
+        bin_dir.mkdir()
+        log = self.root / "goofish.log"
+        script = bin_dir / "goofish"
+        script.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json, os, sys\n"
+            "open(os.environ['GOOFISH_LOG'], 'a', encoding='utf-8').write(' '.join(sys.argv[1:]) + '\\n')\n"
+            "args = sys.argv[1:]\n"
+            "if args[:2] == ['auth', 'status']:\n"
+            "    print(json.dumps({'valid': True, 'unb': 'SHOULD_NOT_LEAK'}))\n"
+            "    raise SystemExit(0)\n"
+            "if args[:2] == ['search', 'items']:\n"
+            "    print(json.dumps({'items': [\n"
+            "        {'item_id': '1001', 'title': '只挂牌', 'price': '¥9.90', 'url': 'https://example.invalid/xianyu/1001'},\n"
+            "        {'item_id': '1002', 'title': '页面写着已售', 'price': '¥20', 'url': 'https://example.invalid/xianyu/1002', 'badge': '已售出'}\n"
+            "    ]}))\n"
+            "    raise SystemExit(0)\n"
+            "if args[:2] == ['item', 'get'] and args[2] == '1002':\n"
+            "    print(json.dumps({'item_id': '1002', 'title': '页面写着已售', 'price': '20', 'price_kind': 'fixed', 'status': '已售出', 'description': '卖家说已经卖掉'}))\n"
+            "    raise SystemExit(0)\n"
+            "raise SystemExit(1)\n",
+            encoding="utf-8",
+        )
+        script.chmod(0o755)
+        old_path = os.environ.get("PATH", "")
+        os.environ["PATH"] = str(bin_dir) + os.pathsep + old_path
+        os.environ["GOOFISH_LOG"] = str(log)
+        live = self.make("live", source_timeout_seconds=8)
+        try:
+            live.plan_override = lambda question, planned: {"keywords": ["门店表格汇总"], "keep_sources": ["goofish-cli"]}
+            live.select_override = lambda question, cards, limit: ["1002"]
+            view = self.finish("帮我看闲鱼上的表格处理供给", ["闲鱼"], service=live)
+        finally:
+            os.environ["PATH"] = old_path
+            os.environ.pop("GOOFISH_LOG", None)
+            live.close()
+        commands = log.read_text(encoding="utf-8").splitlines()
+        self.assertIn("auth status --format json", commands)
+        self.assertTrue(any(line.startswith("search items 门店表格汇总") for line in commands))
+        self.assertIn("item get 1002 --format json", commands)
+        self.assertFalse(any(line.startswith("item get 1001") for line in commands))
+        report = view["report_markdown"]
+        self.assertIn("挂牌价 9.90", report)
+        self.assertIn("挂牌价 20", report)
+        self.assertIn("平台公开标记", report)
+        self.assertIn("卖家自述", report)
+        self.assertIn("没有独立核验成交", report)
+        self.assertNotIn("独立核验成交：", report)
+        self.assertNotIn("SHOULD_NOT_LEAK", report)
+        archive = Path(view["archive_path"])
+        blob = "\n".join(path.read_text(encoding="utf-8") for path in archive.rglob("*") if path.is_file())
+        self.assertNotIn("SHOULD_NOT_LEAK", blob)
+        source = next(item for item in view["sources"] if item["source"] == "goofish-cli")
+        self.assertEqual(source["read_depth"], "2 条挂牌，详情 1 条")
+        self.assertEqual(view["status"], "已完成")
+
+    def test_verified_transaction_is_not_a_listing(self):
+        from aipo.report import build_brief
+        aggregate = {"evidence": [{
+            "id": "Eaaaaaaaaaaaaaaaa",
+            "url": "https://example.invalid/deal",
+            "platform": "闲鱼",
+            "observations": [{
+                "title": "已核对订单",
+                "summary": "独立核验成交：成交价 20。挂牌价 9.9。",
+                "access": "product",
+                "path": "live:goofish-cli/in-site/search",
+                "archived_at": "2026-11-13T00:00:00+08:00",
+            }],
+        }]}
+        brief, _cards = build_brief("核对一笔价格", aggregate, [], {"keywords": ["价格"], "budget": {}}, "replay")
+        self.assertIn("挂牌价 9.9", brief)
+        self.assertIn("成交证据：", brief)
+        self.assertIn("两类证据", brief)
+        self.assertNotIn("没有独立核验成交", brief)
+
+
 class ProtocolTests(unittest.TestCase):
     def test_lsp_and_ndjson_framing(self):
         import io
@@ -401,6 +580,16 @@ class InventoryTests(unittest.TestCase):
             row = next(item for item in report["providers"] if item["name"] == "xiaohongshu-mcp")
             self.assertTrue(row["present"])
             self.assertFalse(row["files"][0]["match"])
+
+    def test_doctor_command_is_callable(self):
+        from aipo.__main__ import main
+        import io
+        from contextlib import redirect_stdout
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            code = main(["doctor"])
+        self.assertEqual(code, 0)
+        self.assertIn("xiaohongshu-mcp", buffer.getvalue())
 
     def test_config_rejects_secrets(self):
         with tempfile.TemporaryDirectory() as folder:
